@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Post Your Property | NS PROPERTIES 4</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header id="siteHeader"></header>
+<main class="container max-w-5xl py-9">
+  <div class="text-center mb-8"><p class="eyebrow">PROPERTY LISTING PORTAL</p><h1 class="text-4xl font-extrabold brand">Post Your Property</h1><p class="muted mt-2">Share your property details and connect with potential buyers or tenants.</p></div>
+  <form id="postPropertyForm">
+    <section class="content-card mb-5"><h2 class="section-title">01. Listing Information</h2><div class="form-grid">
+      <div><label class="field-label">I want to <em>*</em></label><select name="listingType" class="form-control" required><option value="">Select</option><option>Sell</option><option>Rent</option><option>Lease</option></select></div>
+      <div><label class="field-label">I am a <em>*</em></label><select name="sellerType" class="form-control" required><option value="">Select</option><option>Owner</option><option>Agent</option><option>Builder / Developer</option></select></div>
+      <div><label class="field-label">Property category <em>*</em></label><select name="category" class="form-control" required><option value="">Select</option><option>Residential</option><option>Commercial</option></select></div>
+      <div><label class="field-label">Property type <em>*</em></label><select name="propertyType" class="form-control" required><option value="">Select</option><option>Apartment / Flat</option><option>Independent House</option><option>Villa</option><option>Residential Plot</option><option>Office Space</option><option>Shop / Retail Space</option><option>Warehouse</option><option>PG / Hostel</option></select></div>
+    </div></section>
+
+    <section class="content-card mb-5"><h2 class="section-title">02. Property Location</h2><div class="form-grid">
+      <div class="full"><label class="field-label">Full address <em>*</em></label><textarea name="address" class="form-control" rows="2" required></textarea></div>
+      <div><label class="field-label">Locality / Area <em>*</em></label><input name="locality" class="form-control" required placeholder="e.g. Varthur"></div>
+      <div><label class="field-label">City <em>*</em></label><input name="city" class="form-control" value="Bangalore" required></div>
+      <div><label class="field-label">State <em>*</em></label><input name="state" class="form-control" value="Karnataka" required></div>
+      <div><label class="field-label">PIN code <em>*</em></label><input name="pincode" class="form-control" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required></div>
+      <div class="full"><label class="field-label">Google Maps link (optional)</label><input name="mapLink" type="url" class="form-control" placeholder="https://maps.google.com/..."></div>
+    </div></section>
+
+    <section class="content-card mb-5"><h2 class="section-title">03. Property Specifications</h2><div class="form-grid">
+      <div><label class="field-label">BHK</label><select name="bhk" class="form-control"><option value="">Select</option><option>1 BHK</option><option>2 BHK</option><option>3 BHK</option><option>4 BHK</option><option>5+ BHK</option><option>Not applicable</option></select></div>
+      <div><label class="field-label">Bathrooms</label><input name="bathrooms" type="number" min="0" class="form-control"></div>
+      <div><label class="field-label">Built-up area (sq.ft.) <em>*</em></label><input name="area" type="number" min="1" class="form-control" required></div>
+      <div><label class="field-label">Carpet area (sq.ft.)</label><input name="carpetArea" type="number" min="0" class="form-control"></div>
+      <div><label class="field-label">Facing</label><select name="facing" class="form-control"><option value="">Select</option><option>North</option><option>South</option><option>East</option><option>West</option><option>North-East</option><option>North-West</option><option>South-East</option><option>South-West</option></select></div>
+      <div><label class="field-label">Furnishing</label><select name="furnishing" class="form-control"><option value="">Select</option><option>Unfurnished</option><option>Semi Furnished</option><option>Fully Furnished</option></select></div>
+      <div><label class="field-label">Floor number</label><input name="floor" class="form-control"></div>
+      <div><label class="field-label">Total floors</label><input name="totalFloors" type="number" min="0" class="form-control"></div>
+      <div><label class="field-label">Availability</label><select name="availability" class="form-control"><option>Ready to Move</option><option>Under Construction</option><option>Newly Launched</option><option>Available Soon</option></select></div>
+      <div><label class="field-label">Property age</label><select name="age" class="form-control"><option value="">Select</option><option>New Property</option><option>0-5 Years</option><option>5-10 Years</option><option>Above 10 Years</option></select></div>
+    </div></section>
+
+    <section class="content-card mb-5"><h2 class="section-title">04. Pricing Details</h2><div class="form-grid">
+      <div><label class="field-label">Expected price (₹) <em>*</em></label><input name="price" id="postPrice" type="number" min="1" class="form-control" required><p id="priceWords" class="muted text-xs mt-2"></p></div>
+      <div><label class="field-label">Price negotiable?</label><select name="negotiable" class="form-control"><option>Yes</option><option>No</option></select></div>
+      <div><label class="field-label">Monthly maintenance (₹)</label><input name="maintenance" type="number" min="0" class="form-control"></div>
+      <div><label class="field-label">Security deposit (₹)</label><input name="deposit" type="number" min="0" class="form-control"></div>
+    </div></section>
+
+    <section class="content-card mb-5"><h2 class="section-title">05. Amenities</h2><div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="amenityOptions">
+      <label class="check-option"><input type="checkbox" value="Swimming Pool"> Swimming Pool</label><label class="check-option"><input type="checkbox" value="Gymnasium"> Gymnasium</label><label class="check-option"><input type="checkbox" value="Clubhouse"> Clubhouse</label><label class="check-option"><input type="checkbox" value="Lift"> Lift</label><label class="check-option"><input type="checkbox" value="Power Backup"> Power Backup</label><label class="check-option"><input type="checkbox" value="24/7 Security"> 24/7 Security</label><label class="check-option"><input type="checkbox" value="Car Parking"> Car Parking</label><label class="check-option"><input type="checkbox" value="Children's Play Area"> Children's Play Area</label><label class="check-option"><input type="checkbox" value="Garden"> Garden</label><label class="check-option"><input type="checkbox" value="CCTV"> CCTV</label><label class="check-option"><input type="checkbox" value="Intercom"> Intercom</label><label class="check-option"><input type="checkbox" value="Visitor Parking"> Visitor Parking</label>
+    </div></section>
+
+    <section class="content-card mb-5"><h2 class="section-title">06. Property Description</h2>
+      <div class="mb-4"><label class="field-label">Property title <em>*</em></label><input name="title" class="form-control" maxlength="120" required placeholder="e.g. Premium 3 BHK Apartment in Varthur"></div>
+      <label class="field-label">Detailed description <em>*</em></label><textarea name="description" id="postDescription" class="form-control" rows="5" maxlength="2000" required placeholder="Describe your property, features and nearby landmarks..."></textarea><p class="muted text-xs mt-1"><span id="descriptionCount">0</span>/2000 characters</p>
+    </section>
+
+    <section class="content-card mb-5"><h2 class="section-title">07. Property Photos</h2><label class="upload-box block" for="postPhotos"><i class="bx bx-cloud-upload text-4xl brand"></i><b class="block mt-2">Choose property images</b><span class="muted text-xs">JPG, PNG, WEBP · Maximum 5 MB each · Up to 10 images</span></label><input id="postPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden><div id="photoPreviews" class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4"></div><p id="photoCount" class="muted text-xs mt-2">No photos selected.</p></section>
+
+    <section class="content-card mb-5"><h2 class="section-title">08. Contact Information</h2><div class="form-grid">
+      <div><label class="field-label">Full name <em>*</em></label><input name="contactName" class="form-control" required></div>
+      <div><label class="field-label">Mobile number <em>*</em></label><input name="contactPhone" class="form-control" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required></div>
+      <div><label class="field-label">WhatsApp number</label><input name="whatsapp" class="form-control" inputmode="numeric" maxlength="10" pattern="[0-9]{10}"></div>
+      <div><label class="field-label">Email address <em>*</em></label><input name="contactEmail" type="email" class="form-control" required></div>
+    </div></section>
+
+    <section class="content-card mb-5"><label class="flex gap-3 items-start text-sm muted"><input id="postDeclaration" type="checkbox" class="checkbox checkbox-primary mt-1" required><span>I confirm that the information submitted is accurate and authorize NS PROPERTIES 4 to contact me about this listing.</span></label></section>
+    <div class="flex flex-col sm:flex-row justify-end gap-3"><button type="reset" id="resetPostForm" class="btn btn-outline">Reset Form</button><button type="submit" class="btn btn-brand">Preview & Submit <i class="bx bx-right-arrow-alt"></i></button></div>
+  </form>
+</main>
+<footer id="siteFooter"></footer>
+
+<dialog id="postPreviewModal" class="modal"><div class="modal-box max-w-3xl"><h3 class="font-bold text-xl brand mb-4">Review Your Property Listing</h3><div id="postPreviewContent" class="space-y-3 text-sm"></div><div class="flex gap-2 mt-6"><button id="postEdit" class="btn btn-outline flex-1">Edit</button><button id="confirmPost" class="btn btn-brand flex-1">Confirm Submission</button></div></div><form method="dialog" class="modal-backdrop"><button>close</button></form></dialog>
+<dialog id="postSuccessModal" class="modal"><div class="modal-box text-center"><i class="bx bx-check-circle text-6xl text-green-600"></i><h3 class="text-2xl font-bold mt-2">Listing Saved in Demo</h3><p id="postSuccessText" class="muted mt-3"></p><p class="text-xs muted bg-blue-50 p-3 rounded-lg mt-4">Demo only: listing details are saved in this browser. Images are not uploaded and the property is not published. Connect PHP/MySQL to accept real submissions.</p><button id="postSuccessClose" class="btn btn-brand w-full mt-5">Close</button></div></dialog>
+<script src="assets/js/data.js"></script><script src="assets/js/common.js"></script><script src="assets/js/post-property.js"></script>
+</body></html>

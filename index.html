@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NS PROPERTIES 4 | Find Your Dream Property</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header id="siteHeader"></header>
+<main>
+  <section class="hero-home">
+    <div class="hero-overlay"></div>
+    <div class="container relative z-10 py-20 md:py-28">
+      <span class="badge badge-outline border-white text-white mb-4">YOUR PROPERTY, OUR PRIORITY</span>
+      <h1 class="text-4xl md:text-6xl font-extrabold text-white max-w-3xl leading-tight">Find a place you'll<br><span class="gold-text">love to call home.</span></h1>
+      <p class="text-white/85 mt-5 max-w-xl text-lg">Discover apartments, villas, plots and commercial spaces across Bangalore.</p>
+      <div class="search-panel mt-9 max-w-5xl">
+        <form id="homeSearch" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <select id="searchType" class="form-control"><option value="buy">Buy</option><option value="rent">Rent</option><option value="commercial">Commercial</option><option value="new-project">New Projects</option></select>
+          <select id="searchCategory" class="form-control"><option value="">Any property type</option><option value="apartment">Apartment</option><option value="villa">Villa</option><option value="independent house">Independent House</option><option value="plot">Plot</option><option value="commercial">Commercial</option></select>
+          <input id="searchLocation" class="form-control" placeholder="Location e.g. Varthur">
+          <select id="searchBudget" class="form-control"><option value="">Any budget</option><option value="5000000">Up to ₹50 L</option><option value="10000000">Up to ₹1 Cr</option><option value="15000000">Up to ₹1.5 Cr</option><option value="25000000">Up to ₹2.5 Cr</option></select>
+          <button class="btn btn-brand w-full" type="submit"><i class="bx bx-search"></i> Search Properties</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="container py-14">
+    <div class="section-head"><div><p class="eyebrow">EXPLORE</p><h2 class="section-title">Find properties by category</h2></div><a href="properties.html" class="link brand font-semibold">View all properties →</a></div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <a class="category-tile" href="properties.html?category=apartment"><i class="bx bx-building-house"></i><b>Apartments</b><span>Modern urban living</span></a>
+      <a class="category-tile" href="properties.html?category=villa"><i class="bx bx-home-alt"></i><b>Villas</b><span>Space and privacy</span></a>
+      <a class="category-tile" href="properties.html?category=plot"><i class="bx bx-map"></i><b>Plots</b><span>Build your future</span></a>
+      <a class="category-tile" href="properties.html?type=commercial"><i class="bx bx-store"></i><b>Commercial</b><span>Business spaces</span></a>
+    </div>
+  </section>
+
+  <section class="bg-white py-14">
+    <div class="container">
+      <div class="section-head"><div><p class="eyebrow">HANDPICKED FOR YOU</p><h2 class="section-title">Featured properties</h2><p class="muted">Explore selected properties around Bangalore.</p></div><a href="properties.html" class="link brand font-semibold">Explore all →</a></div>
+      <div id="featuredProperties" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+  </section>
+
+  <section class="container py-14">
+    <div class="cta-panel">
+      <div><p class="eyebrow text-white/70">PROPERTY OWNERS</p><h2 class="text-3xl font-bold text-white">Have a property to sell or rent?</h2><p class="text-white/80 mt-2">List your property and connect with interested customers.</p></div>
+      <a href="post-property.html" class="btn bg-white text-slate-900 border-0">Post Property Free <i class="bx bx-right-arrow-alt"></i></a>
+    </div>
+  </section>
+</main>
+<footer id="siteFooter"></footer>
+<script src="assets/js/data.js"></script><script src="assets/js/common.js"></script><script src="assets/js/home.js"></script>
+</body></html>

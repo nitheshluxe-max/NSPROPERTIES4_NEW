@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Property Details | NS PROPERTIES 4</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header id="siteHeader"></header>
+<main class="container py-7">
+  <div class="breadcrumbs text-sm mb-5"><ul><li><a href="index.html">Home</a></li><li><a href="properties.html">Properties</a></li><li>Details</li></ul></div>
+  <div class="flex flex-col md:flex-row justify-between gap-4 mb-5">
+    <div><span id="detailBadge" class="badge badge-outline badge-success mb-2"></span><h1 id="detailTitle" class="text-3xl font-extrabold brand"></h1><p id="detailLocation" class="muted mt-2"></p></div>
+    <div class="flex gap-2"><button id="shareProperty" class="btn btn-outline btn-sm"><i class="bx bx-share-alt"></i> Share</button><button id="saveProperty" class="btn btn-outline btn-sm"><i class="bx bx-heart"></i> Save</button></div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-7" id="detailGallery"></div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-5">
+      <section class="content-card"><div class="flex flex-wrap justify-between gap-4"><div><p class="muted text-sm">Expected Price</p><h2 id="detailPrice" class="text-3xl font-extrabold brand"></h2><p id="detailRate" class="muted text-sm mt-1"></p></div><div><p class="muted text-sm">Property ID</p><b id="detailId"></b></div></div><div class="divider"></div><div id="detailSpecs" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div></section>
+      <section class="content-card"><h2 class="section-title">About This Property</h2><p id="detailDescription" class="muted leading-7"></p><div id="detailFacts" class="grid grid-cols-2 gap-4 mt-5 text-sm"></div></section>
+      <section class="content-card"><h2 class="section-title">Amenities & Facilities</h2><div id="detailAmenities" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div></section>
+      <section class="content-card"><h2 class="section-title">Location & Neighbourhood</h2><p id="detailLocationText" class="muted mb-4"></p><iframe id="detailMap" title="Property map" class="w-full rounded-xl" height="320" style="border:0" loading="lazy"></iframe><a id="openMap" class="btn btn-outline btn-sm mt-3" target="_blank" rel="noopener">Open in Google Maps</a></section>
+    </div>
+    <aside><div class="content-card sticky top-24"><h2 class="text-xl font-bold brand">Interested in this property?</h2><p class="muted text-sm mt-2 mb-4">Send an enquiry and our team can help arrange a viewing.</p>
+      <form id="detailEnquiry" class="space-y-3"><input id="enqName" class="form-control" placeholder="Your full name" required><input id="enqPhone" class="form-control" placeholder="10-digit mobile number" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required><input id="enqEmail" type="email" class="form-control" placeholder="Email address"><select id="enqType" class="form-control"><option>Property Enquiry</option><option>Request a Site Visit</option><option>Price Discussion</option></select><textarea id="enqMessage" class="form-control" rows="3" placeholder="Message (optional)"></textarea><button class="btn btn-brand w-full">Submit Enquiry</button></form>
+      <a id="detailWhatsApp" target="_blank" rel="noopener" class="btn bg-green-600 hover:bg-green-700 text-white border-0 w-full mt-3"><i class="bx bxl-whatsapp"></i> WhatsApp Enquiry</a>
+    </div></aside>
+  </div>
+  <section class="py-12"><div class="section-head"><div><p class="eyebrow">YOU MAY ALSO LIKE</p><h2 class="section-title">Similar Properties</h2></div><a href="properties.html" class="link brand">View all →</a></div><div id="similarProperties" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div></section>
+</main>
+<footer id="siteFooter"></footer>
+<dialog id="galleryViewer" class="modal"><div class="modal-box max-w-5xl bg-black p-3"><div class="flex justify-end"><button id="closeGallery" class="btn btn-sm btn-circle btn-ghost text-white">✕</button></div><img id="galleryLarge" class="max-h-[80vh] w-full object-contain" alt="Property image"></div><form method="dialog" class="modal-backdrop"><button>close</button></form></dialog>
+<script src="assets/js/data.js"></script><script src="assets/js/common.js"></script><script src="assets/js/details.js"></script>
+</body></html>

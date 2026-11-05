@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Properties for Sale & Rent | NS PROPERTIES 4</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header id="siteHeader"></header>
+<main class="container py-8">
+  <div class="mb-7"><p class="eyebrow">PROPERTY DISCOVERY</p><h1 class="text-3xl md:text-4xl font-extrabold brand">Find your perfect property</h1><p class="muted mt-2">Browse available homes, plots and commercial spaces.</p></div>
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <aside class="hidden lg:block">
+      <div class="filter-panel">
+        <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-lg">Filters</h2><button id="clearFilters" class="link text-sm">Clear all</button></div>
+        <label class="field-label">Listing type</label><select id="filterType" class="form-control mb-4"><option value="">All listings</option><option value="buy">Buy</option><option value="rent">Rent</option><option value="commercial">Commercial</option><option value="new-project">New Projects</option></select>
+        <label class="field-label">Property category</label><select id="filterCategory" class="form-control mb-4"><option value="">All categories</option><option value="apartment">Apartment</option><option value="villa">Villa</option><option value="independent house">Independent House</option><option value="plot">Plot</option><option value="commercial">Commercial</option></select>
+        <label class="field-label">Location</label><input id="filterLocation" class="form-control mb-4" placeholder="Area or locality">
+        <label class="field-label">Maximum price (₹)</label><input id="filterMaxPrice" type="number" class="form-control mb-4" placeholder="e.g. 10000000">
+        <label class="field-label">Bedrooms</label><select id="filterBhk" class="form-control mb-4"><option value="">Any</option><option value="1">1 BHK</option><option value="2">2 BHK</option><option value="3">3 BHK</option><option value="4">4+ BHK</option></select>
+        <label class="field-label">Availability</label><select id="filterStatus" class="form-control"><option value="">Any status</option><option>Ready to Move</option><option>Under Construction</option><option>Newly Launched</option></select>
+      </div>
+    </aside>
+    <section class="lg:col-span-3">
+      <div class="flex flex-col sm:flex-row gap-3 justify-between mb-5">
+        <input id="listingSearch" class="form-control sm:max-w-md" placeholder="Search by title or location...">
+        <div class="flex gap-2">
+          <button id="mobileFilterBtn" class="btn btn-outline lg:hidden"><i class="bx bx-filter"></i> Filters</button>
+          <select id="sortBy" class="form-control min-w-40"><option value="newest">Newest first</option><option value="low">Price: Low to High</option><option value="high">Price: High to Low</option></select>
+          <button id="gridView" class="btn btn-outline btn-square" title="Grid view"><i class="bx bx-grid-alt"></i></button>
+          <button id="listView" class="btn btn-outline btn-square" title="List view"><i class="bx bx-list-ul"></i></button>
+        </div>
+      </div>
+      <div class="flex justify-between text-sm text-gray-500 mb-4"><span id="resultCount">Loading properties...</span><span>Bangalore, Karnataka</span></div>
+      <div id="propertyResults" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+      <div id="emptyState" class="hidden text-center bg-white rounded-xl p-12"><i class="bx bx-search-alt text-5xl text-gray-300"></i><h3 class="font-bold text-xl mt-3">No properties found</h3><p class="muted mt-2">Try changing your filters.</p><button id="emptyClear" class="btn btn-brand mt-4">Clear filters</button></div>
+    </section>
+  </div>
+</main>
+<dialog id="mobileFilters" class="modal">
+  <div class="modal-box"><div class="flex justify-between"><h3 class="font-bold text-xl">Filters</h3><button id="closeMobileFilters" class="btn btn-sm btn-circle">✕</button></div>
+    <div class="mt-5">
+      <label class="field-label">Listing type</label><select id="mType" class="form-control mb-3"><option value="">All listings</option><option value="buy">Buy</option><option value="rent">Rent</option><option value="commercial">Commercial</option><option value="new-project">New Projects</option></select>
+      <label class="field-label">Category</label><select id="mCategory" class="form-control mb-3"><option value="">All categories</option><option value="apartment">Apartment</option><option value="villa">Villa</option><option value="independent house">Independent House</option><option value="plot">Plot</option><option value="commercial">Commercial</option></select>
+      <label class="field-label">Location</label><input id="mLocation" class="form-control mb-3" placeholder="Area">
+      <label class="field-label">Maximum price (₹)</label><input id="mMaxPrice" type="number" class="form-control mb-3" placeholder="Maximum price">
+      <label class="field-label">Bedrooms</label><select id="mBhk" class="form-control mb-3"><option value="">Any</option><option value="1">1 BHK</option><option value="2">2 BHK</option><option value="3">3 BHK</option><option value="4">4+ BHK</option></select>
+      <label class="field-label">Availability</label><select id="mStatus" class="form-control"><option value="">Any status</option><option>Ready to Move</option><option>Under Construction</option><option>Newly Launched</option></select>
+    </div>
+    <div class="flex gap-2 mt-5"><button id="mobileClear" class="btn btn-outline flex-1">Clear</button><button id="applyMobileFilters" class="btn btn-brand flex-1">Apply Filters</button></div>
+  </div><form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+<footer id="siteFooter"></footer>
+<script src="assets/js/data.js"></script><script src="assets/js/common.js"></script><script src="assets/js/listings.js"></script>
+</body></html>
