@@ -1,6 +1,6 @@
 (async()=>{await NS_BACKEND.init();
 const params=new URLSearchParams(location.search);
-const property=window.NS_PROPERTIES.find(p=>p.id===(params.get("id")||"1001"))||window.NS_PROPERTIES[0];
+const property=window.NS_PROPERTIES.find(p=>p.id===(params.get("id")||"1001"))||(params.has("id")?null:window.NS_PROPERTIES[0]);
 if(!property){document.querySelector("main").textContent="No approved properties are available yet.";return;}
 const $=id=>document.getElementById(id);
 document.title=property.title+" | NS PROPERTIES 4";
