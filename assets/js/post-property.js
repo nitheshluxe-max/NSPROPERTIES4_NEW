@@ -20,9 +20,9 @@ form.addEventListener("submit",e=>{
  if(!document.getElementById("postDeclaration").checked){alert("Please accept the declaration.");return}
  pending=Object.fromEntries(new FormData(form).entries());
  pending.amenities=Array.from(document.querySelectorAll("#amenityOptions input:checked")).map(x=>x.value);
- pending.photoNames=photos.map(x=>x.name);
+ pending.photoNames=[];
  const price=NS.money(pending.price);
- document.getElementById("postPreviewContent").innerHTML=`<div class="bg-blue-50 rounded-xl p-4"><b class="text-xl brand">${esc(pending.title)}</b><p class="muted mt-1">${esc(pending.locality)}, ${esc(pending.city)}</p><p class="text-2xl font-bold mt-3">${price}</p></div><div class="grid grid-cols-2 gap-3">${Object.entries(pending).filter(([k])=>!["description","amenities","photoNames","mapLink"].includes(k)).map(([k,v])=>`<div class="bg-slate-50 p-3 rounded-lg"><span class="muted text-xs">${esc(k)}</span><p class="font-semibold">${esc(v)}</p></div>`).join("")}</div><div><b>Description</b><p class="muted whitespace-pre-wrap">${esc(pending.description)}</p></div><div><b>Amenities:</b> ${esc(pending.amenities.join(", ")||"Not specified")}</div><div><b>Photos:</b> ${photos.length} selected</div>`;
+ document.getElementById("postPreviewContent").innerHTML=`<div class="bg-blue-50 rounded-xl p-4"><b class="text-xl brand">${esc(pending.title)}</b><p class="muted mt-1">${esc(pending.locality)}, ${esc(pending.city)}</p><p class="text-2xl font-bold mt-3">${price}</p></div><div class="grid grid-cols-2 gap-3">${Object.entries(pending).filter(([k])=>!["description","amenities","photoNames","mapLink"].includes(k)).map(([k,v])=>`<div class="bg-slate-50 p-3 rounded-lg"><span class="muted text-xs">${esc(k)}</span><p class="font-semibold">${esc(v)}</p></div>`).join("")}</div><div><b>Description</b><p class="muted whitespace-pre-wrap">${esc(pending.description)}</p></div><div><b>Amenities:</b> ${esc(pending.amenities.join(", ")||"Not specified")}</div><div><b>Photos:</b> ${photos.length} previewed locally (not uploaded)</div>`;
  document.getElementById("postPreviewModal").showModal();
 });
 document.getElementById("postEdit").onclick=()=>document.getElementById("postPreviewModal").close();
