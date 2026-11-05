@@ -1,5 +1,7 @@
+(async()=>{await NS_BACKEND.init();
 const params=new URLSearchParams(location.search);
 const property=window.NS_PROPERTIES.find(p=>p.id===(params.get("id")||"1001"))||window.NS_PROPERTIES[0];
+if(!property){document.querySelector("main").textContent="No approved properties are available yet.";return;}
 const $=id=>document.getElementById(id);
 document.title=property.title+" | NS PROPERTIES 4";
 $("detailBadge").textContent=property.badge||property.status;
@@ -30,5 +32,15 @@ function getSaved(){try{return JSON.parse(localStorage.getItem(savedKey)||"[]")}
 function updateSave(){const yes=getSaved().includes(property.id);$("saveProperty").innerHTML=yes?'<i class="bx bxs-heart text-red-500"></i> Saved':'<i class="bx bx-heart"></i> Save'}
 $("saveProperty").addEventListener("click",()=>{let a=getSaved();a=a.includes(property.id)?a.filter(x=>x!==property.id):[...a,property.id];localStorage.setItem(savedKey,JSON.stringify(a));updateSave()});updateSave();
 $("shareProperty").addEventListener("click",async()=>{try{if(navigator.share)await navigator.share({title:property.title,url:location.href});else{await navigator.clipboard.writeText(location.href);alert("Link copied")}}catch(e){if(e.name!=="AbortError")alert("Could not share link")}});
-$("detailEnquiry").addEventListener("submit",e=>{e.preventDefault();const name=$("enqName").value.trim(),phoneNo=$("enqPhone").value.trim();if(!/^[0-9]{10}$/.test(phoneNo)){alert("Enter a valid 10-digit mobile number");return}const msg=`Property enquiry\nName: ${name}\nPhone: ${phoneNo}\nEmail: ${$("enqEmail").value}\nEnquiry: ${$("enqType").value}\nMessage: ${$("enqMessage").value}\nProperty: ${property.title}\nID: ${property.id}\nLocation: ${property.location}`;const records=JSON.parse(localStorage.getItem("ns_property_enquiries")||"[]");records.push({name,phone:phoneNo,email:$("enqEmail").value,type:$("enqType").value,message:$("enqMessage").value,propertyId:property.id,date:new Date().toISOString()});localStorage.setItem("ns_property_enquiries",JSON.stringify(records));window.open(wa(msg),"_blank","noopener");alert("Enquiry details prepared. WhatsApp will open to send your message.");e.target.reset()});
+$("detailEnquiry").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const name=$("enqName").value.trim(),phone=$("enqPhone").value.trim();
+ if(!/^[0-9]{10}$/.test(phone)){alert("Enter a valid 10-digit mobile number");return;}
+ if(!NS_BACKEND.available){alert("This is a demo property. Use the WhatsApp link to enquire.");return;}
+ const button=e.target.querySelector('button[type="submit"],button:not([type])');if(button)button.disabled=true;
+ try{await NS_BACKEND.submit("enquiry.php",{propertyId:property.id,name,phone,email:$("enqEmail").value.trim(),type:$("enqType").value,message:$("enqMessage").value});alert("Enquiry submitted successfully.");e.target.reset();}
+ catch(err){alert(err.message)}finally{if(button)button.disabled=false;}
+});
 $("similarProperties").innerHTML=window.NS_PROPERTIES.filter(p=>p.id!==property.id).slice(0,3).map(p=>NS.card(p)).join("");
+
+})();
