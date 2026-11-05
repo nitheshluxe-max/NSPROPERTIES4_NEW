@@ -16,7 +16,7 @@ document.getElementById("postPrice").addEventListener("input",e=>document.getEle
 let pending=null;
 form.addEventListener("submit",e=>{
  e.preventDefault();if(!form.reportValidity())return;
- if(!photos.length){alert("Please select at least one property photo.");return}
+ if(photos.length){alert("Images are currently preview-only and will NOT be uploaded with your listing.");}
  if(!document.getElementById("postDeclaration").checked){alert("Please accept the declaration.");return}
  pending=Object.fromEntries(new FormData(form).entries());
  pending.amenities=Array.from(document.querySelectorAll("#amenityOptions input:checked")).map(x=>x.value);
@@ -26,14 +26,14 @@ form.addEventListener("submit",e=>{
  document.getElementById("postPreviewModal").showModal();
 });
 document.getElementById("postEdit").onclick=()=>document.getElementById("postPreviewModal").close();
-document.getElementById("confirmPost").onclick=()=>{
- const ref="NSP-"+Date.now().toString().slice(-8);
- const saved=JSON.parse(localStorage.getItem("ns_property_submissions")||"[]");
- saved.push({...pending,reference:ref,photoNames:photos.map(f=>f.name),submittedAt:new Date().toISOString(),status:"Pending (demo only)"});
- localStorage.setItem("ns_property_submissions",JSON.stringify(saved));
- document.getElementById("postPreviewModal").close();
- document.getElementById("postSuccessText").textContent="Your demo reference number is "+ref+".";
- document.getElementById("postSuccessModal").showModal();
+document.getElementById("confirmPost").onclick=async()=>{
+ const button=document.getElementById("confirmPost");button.disabled=true;
+ try{
+  const result=await NS_BACKEND.submit("submit-property.php",pending);
+  document.getElementById("postPreviewModal").close();
+  document.getElementById("postSuccessText").textContent="Reference "+result.reference+". "+result.message;
+  document.getElementById("postSuccessModal").showModal();
+ }catch(err){alert("Submission failed: "+err.message)}finally{button.disabled=false;}
 };
 document.getElementById("postSuccessClose").onclick=()=>document.getElementById("postSuccessModal").close();
 document.getElementById("resetPostForm").addEventListener("click",()=>{photos.forEach(()=>{});photos=[];renderPhotos();document.getElementById("descriptionCount").textContent="0";document.getElementById("priceWords").textContent=""});
