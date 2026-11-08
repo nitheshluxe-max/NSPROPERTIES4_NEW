@@ -45,7 +45,7 @@ alter table public.site_admins enable row level security;
 alter table public.properties enable row level security;
 alter table public.enquiries enable row level security;
 revoke all on public.site_admins,public.properties,public.enquiries from anon,authenticated;
-grant select on public.properties to anon,authenticated;
+grant select on public.properties to authenticated;\n-- Admins can read owner contact details; ordinary authenticated users are limited by row policies.
 grant select,update on public.properties to authenticated;
 grant select on public.enquiries to authenticated;
 grant select on public.site_admins to authenticated;
@@ -65,6 +65,12 @@ drop policy if exists "admin enquiry select" on public.enquiries;
 create policy "admin enquiry select" on public.enquiries for select to authenticated using(public.is_site_admin());
 drop policy if exists "admin identity" on public.site_admins;
 create policy "admin identity" on public.site_admins for select to authenticated using(user_id=(select auth.uid()));
+-- Safe public projection: never expose property owner phone, email or full address.
+create or replace view public.public_properties with (security_invoker=true) as
+ select id,title,listing_type,category,locality,city,price,area,bhk,bathrooms,availability,description,amenities,image_urls,created_at
+ from public.properties where status='approved';
+grant select (id,title,listing_type,category,locality,city,price,area,bhk,bathrooms,availability,description,amenities,image_urls,created_at,status) on public.properties to anon;
+grant select on public.public_properties to anon,authenticated;
 -- Anonymous users cannot directly insert into tables. Validated SECURITY DEFINER functions accept submissions.
 create or replace function public.submit_property(payload jsonb) returns bigint
 language plpgsql security definer set search_path='' as $$
