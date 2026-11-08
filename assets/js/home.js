@@ -1,3 +1,4 @@
+(async()=>{await NS_BACKEND.init();
 const featured = document.getElementById("featuredProperties");
 if (featured) featured.innerHTML = window.NS_PROPERTIES.slice(0,3).map(p=>NS.card(p)).join("");
 document.getElementById("homeSearch")?.addEventListener("submit",e=>{
@@ -7,3 +8,5 @@ document.getElementById("homeSearch")?.addEventListener("submit",e=>{
  if(cat)q.set("category",cat);if(loc)q.set("location",loc);if(price)q.set("max_price",price);
  location.href="properties.html?"+q.toString();
 });
+
+})();

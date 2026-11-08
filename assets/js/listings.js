@@ -1,3 +1,4 @@
+(async()=>{await NS_BACKEND.init();
 const all=window.NS_PROPERTIES;
 const ids=["Type","Category","Location","MaxPrice","Bhk","Status"];
 const controls=Object.fromEntries(ids.map(k=>[k,document.getElementById("filter"+k)]));
@@ -37,3 +38,5 @@ document.getElementById("closeMobileFilters").addEventListener("click",()=>docum
 document.getElementById("applyMobileFilters").addEventListener("click",()=>{ids.forEach(k=>controls[k].value=mobile[k].value);render();document.getElementById("mobileFilters").close()});
 document.getElementById("mobileClear").addEventListener("click",()=>{ids.forEach(k=>mobile[k].value="")});
 render();
+
+})();
