@@ -4,7 +4,7 @@ This version replaces browser PHP calls with Supabase REST RPC calls. No PHP ser
 ## Setup (required)
 1. Create a Supabase project at https://supabase.com/dashboard .
 2. Open **SQL Editor** and run `supabase/schema.sql`.
-3. In Supabase Project Settings / API, copy the project URL and **publishable (or legacy anon) key**.
+3. In Supabase Project Settings / API, copy the project URL and **legacy anon JWT key**.
 4. Edit `assets/js/supabase-config.js` and replace the two placeholders. **NEVER use a service_role or secret key in the website.**
 5. In Supabase Authentication > Users, create an admin email/password user. Copy its UUID.
 6. In SQL Editor, run: `insert into public.site_admins(user_id) values ('YOUR-AUTH-USER-UUID');`
