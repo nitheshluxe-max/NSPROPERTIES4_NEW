@@ -12,7 +12,7 @@ window.NS_BACKEND={
  async init(){
   if(!this.configured){console.info('Supabase not configured; showing sample listings');return}
   try{
-   const rows=await this.request('properties?select=id,title,listing_type,category,locality,city,price,area,bhk,bathrooms,availability,description,amenities,image_urls&status=eq.approved&order=created_at.desc&limit=100');
+   const rows=await this.request('public_properties?select=id,title,listing_type,category,locality,city,price,area,bhk,bathrooms,availability,description,amenities,image_urls&order=created_at.desc&limit=100');
    window.NS_PROPERTIES=rows.map(p=>({...p,id:String(p.id),type:p.listing_type,location:p.locality+', '+p.city,status:p.availability,badge:p.availability,images:Array.isArray(p.image_urls)?p.image_urls:[],map:p.locality+', '+p.city}));
    this.available=true;
   }catch(e){console.error(e);window.NS_PROPERTIES=[];this.available=true}
