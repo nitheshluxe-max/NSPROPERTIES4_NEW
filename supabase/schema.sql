@@ -99,7 +99,13 @@ begin
  or jsonb_array_length(coalesce(payload->'amenities','[]'::jsonb))>40
  then raise exception 'Please check the property details'; end if;
  insert into public.properties(title,listing_type,category,locality,city,address,state,pincode,price,area,bhk,bathrooms,availability,description,amenities,contact_name,contact_phone,contact_email)
- values(trim(payload->>'title'),v_type,trim(payload->>'propertyType'),trim(payload->>'locality'),trim(payload->>'city'),trim(payload->>'address'),trim(payload->>'state'),payload->>'pincode',(payload->>'price')::numeric,(payload->>'area')::numeric,
+ values(trim(payload->>'title'),v_type,case
+ when payload->>'propertyType'='Apartment / Flat' then 'apartment'
+ when payload->>'propertyType'='Independent House' then 'independent house'
+ when payload->>'propertyType'='Villa' then 'villa'
+ when payload->>'propertyType' in ('Residential Plot') then 'plot'
+ when payload->>'propertyType' in ('Office Space','Shop / Retail Space','Warehouse') then 'commercial'
+ else lower(trim(payload->>'propertyType')) end,trim(payload->>'locality'),trim(payload->>'city'),trim(payload->>'address'),trim(payload->>'state'),payload->>'pincode',(payload->>'price')::numeric,(payload->>'area')::numeric,
  case when payload->>'bhk' like '5+%' then 5 else coalesce(nullif(substring(payload->>'bhk' from '^[0-9]+'),'')::integer,0) end,
  coalesce(nullif(payload->>'bathrooms','')::integer,0),
  left(coalesce(payload->>'availability','Ready to Move'),80),trim(payload->>'description'),coalesce(payload->'amenities','[]'::jsonb),
