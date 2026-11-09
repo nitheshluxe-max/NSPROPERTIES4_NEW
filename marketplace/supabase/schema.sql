@@ -20,7 +20,7 @@ create index if not exists properties_search_idx on public.properties(status,cit
 alter table public.properties enable row level security;
 -- Anonymous visitors may only read approved listings. Nonconsenting phone numbers
 -- are not exposed through this public view.
-create or replace view public.public_properties with (security_invoker=true) as
+create or replace view public.public_properties with (security_invoker=false) as
  select id,title,description,city,locality,purpose,property_type,price,area_sqft,
  case when publish_contact then contact_phone else null end as contact_phone,
  publish_contact,status,created_at from public.properties where status='approved';
@@ -30,7 +30,6 @@ grant select on public.public_properties to anon,authenticated;
 grant insert on public.properties to authenticated;
 create policy "Users insert own pending listings" on public.properties for insert to authenticated
  with check(auth.uid()=user_id and status='pending');
-create policy "Read approved properties for public view" on public.properties for select to anon,authenticated
- using(status='approved');
+-- View owner executes the approved-only projection; direct table reads remain revoked.
 -- Admin review should use Supabase dashboard or a separately secured server function.
 -- No client-side approval permissions are granted.
