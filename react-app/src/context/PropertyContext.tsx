@@ -1133,20 +1133,11 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updatePropertyStatus = async (id: string, status: ListingStatus): Promise<void> => {
-    try {
-      await updateDoc(doc(db, 'properties', id), { status });
-      setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
-      if (status === 'approved') {
-        setNewlyPostedId(id);
-      }
-      if (selectedProperty?.id === id) {
-        setSelectedProperty(prev => prev && prev.id === id ? { ...prev, status } : prev);
-      }
-      console.log(`Property ${id} status updated to: ${status}`);
-    } catch (err) {
-      console.error('Failed to update property status in Firestore:', err);
-      handleFirestoreError(err, OperationType.UPDATE, `properties/${id}`);
-      throw new Error(err instanceof Error ? err.message : 'Failed to update status in database');
+    const { reviewProperty } = await import('../lib/propertyRepository');
+    await reviewProperty(id, status);
+    setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+    if (selectedProperty?.id === id) {
+      setSelectedProperty(prev => prev?.id === id ? { ...prev, status } : prev);
     }
   };
 
