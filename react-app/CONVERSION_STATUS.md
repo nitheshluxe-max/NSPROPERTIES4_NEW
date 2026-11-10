@@ -1,18 +1,28 @@
 # React + Supabase conversion progress
 
-The original React visual components are in `react-app/src`. The Firebase-based PropertyContext and admin logic are **not yet migrated**. The project must not be deployed as a working Supabase app.
+## Implemented in development branch
+- Approved-only public property loading from `public_properties` with `property_photos` image URLs.
+- Public listing refresh subscription (requires Realtime publication to receive database events; initial load works without it).
+- React property posting now writes pending records to Supabase; login is required.
+- Admin status updates use secured `admin_review_property` RPC.
+- Supabase OTP admin sign-in dialog and admin membership verification.
+- Admin routes no longer grant admin access automatically.
 
-## Completed in this branch
-- Added a typed Supabase property repository for approved listings, image URLs, email OTP, new pending listings, image uploads and admin review RPCs.
-- Repository uses the **existing** Supabase schema and Phase 2 admin/photo SQL from the marketplace.
-- Repository operations are not yet wired into the original React UI.
+## NOT production ready
+- Firestore remains in `PropertyContext.tsx` for inquiries, lead registration, visitor analytics, editing, deletion, and featured property operations. These require replacement and secure SQL/RLS.
+- Admin property list still needs a full Supabase data adapter and React wiring.
+- The source form uses image URLs and browser-upload logic that have not yet been fully migrated to Supabase Storage.
+- React `Property` type contains more fields than the existing SQL schema. Advanced fields require a schema migration; otherwise they are not persisted.
+- Existing seed/localStorage initial state can briefly appear before Supabase loads; eliminate before launch.
+- Original binary images and map configuration are not fully migrated.
+- No production build, tests, or GitHub Pages deployment validation has been performed.
+- Existing Supabase SQL policies and admin membership must be applied in your Supabase project; committing code does not execute SQL.
 
-## Required before deploying
-- Replace Firebase state subscriptions, mutations, and authentication in `src/context/PropertyContext.tsx`.
-- Add Supabase schema/RLS for favorites, inquiries, leads, visitor tracking, maps, and advanced property fields; do not use permissive public write policies.
-- Convert AdminConsole and its login to Supabase auth and admin RPCs.
-- Migrate image assets and validate map API configuration.
-- Run TypeScript, production build, and end-to-end checks. Only then add a GitHub Pages deploy workflow.
+## Safety
+Do not merge or deploy until all Firestore writes are removed and the build passes. The existing live marketplace remains unchanged.
 
-## Supabase requirements
-Run `marketplace/supabase/schema.sql` and `marketplace/supabase/phase2_admin_photos.sql` (from earlier work), register the admin user, and use only the project base URL and publishable key.
+## Deployment after completion
+1. Apply the reviewed SQL migrations and admin membership in Supabase SQL Editor.
+2. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (public key only).
+3. Build/test `react-app`, then deploy `dist` via GitHub Actions to GitHub Pages.
+4. Verify login, posting, moderation, photo uploads, inquiries, map, and mobile layouts.
