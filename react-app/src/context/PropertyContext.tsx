@@ -411,7 +411,7 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (isAdminRoute) {
         setCurrentView('admin');
-        setIsAdminAuthenticated(true);
+        // Route changes must never elevate privileges. Supabase verifies membership.
       } else if (currentView === 'admin' && !isAdminRoute) {
         // Return to portal when user navigates away from #admin
         setCurrentView('portal');
