@@ -457,54 +457,51 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => window.removeEventListener('hashchange', checkPropertyDeepLink);
   }, [properties]);
 
-  // Real-time Firestore sync: properties
+  // Public listings come exclusively from the Supabase approved-only view.
+  // Do not merge demo seed listings into production search results.
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'properties'),
-      async (snapshot) => {
+    let active = true;
+    const load = async () => {
+      try {
+        const { listApprovedProperties } = await import('../lib/propertyRepository');
+        const rows = await listApprovedProperties();
+        if (!active) return;
+        const mapped = rows.map(row => normalizeProperty({
+          id: row.id,
+          title: row.title,
+          description: row.description || '',
+          city: row.city,
+          locality: row.locality,
+          listingType: row.purpose === 'lease' ? 'rent' : row.purpose,
+          propertyType: row.property_type === 'plot' ? 'land' :
+            row.property_type === 'house' ? 'villa' :
+            row.property_type === 'pg' ? 'apartment' : row.property_type,
+          price: Number(row.price),
+          superBuiltUpArea: Number(row.area_sqft) || 1200,
+          images: row.photoUrls,
+          status: 'approved',
+          seller: {
+            id: 'public-listing',
+            name: 'Property owner',
+            phone: row.contact_phone || '',
+            email: '',
+            type: 'owner',
+            verified: false
+          },
+          createdAt: row.created_at
+        }));
+        setProperties(mapped);
         setIsFirebaseConnected(true);
-        const loaded: Property[] = [];
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          if (data) {
-            loaded.push(normalizeProperty(data));
-          }
-        });
-
-        // Merge loaded Firestore documents with INITIAL_PROPERTIES
-        // This guarantees previous properties, seed data, and new listings coexist seamlessly
-        const loadedIds = new Set(loaded.map((p) => p.id));
-        const combined = [
-          ...loaded,
-          ...INITIAL_PROPERTIES.filter((p) => !loadedIds.has(p.id)).map((p) => normalizeProperty(p))
-        ];
-
-        // Sort newest listings first
-        combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setProperties(combined);
-
-        // Seed missing initial properties to Firestore in the background
-        const missingSeeds = INITIAL_PROPERTIES.filter((p) => !loadedIds.has(p.id));
-        if (missingSeeds.length > 0) {
-          try {
-            const batch = writeBatch(db);
-            missingSeeds.slice(0, 50).forEach((prop) => {
-              const docRef = doc(db, 'properties', prop.id);
-              batch.set(docRef, cleanFirestoreData(prop), { merge: true });
-            });
-            batch.commit().catch((seedCommitErr) => console.warn('Background seed commit notice:', seedCommitErr));
-          } catch (seedErr) {
-            console.warn('Initial properties Firestore seed notice:', seedErr);
-          }
-        }
-      },
-      (error) => {
-        setIsFirebaseConnected(false);
-        handleFirestoreError(error, OperationType.GET, 'properties');
+      } catch (error) {
+        console.error('Supabase property loading failed:', error);
+        if (active) setIsFirebaseConnected(false);
       }
-    );
-
-    return () => unsubscribe();
+    };
+    void load();
+    const channel = supabase.channel('approved-properties-refresh')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, () => { void load(); })
+      .subscribe();
+    return () => { active = false; void supabase.removeChannel(channel); };
   }, []);
 
   // Real-time Firestore sync: inquiries
@@ -1096,51 +1093,27 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const addProperty = async (
     newProp: Omit<Property, 'id' | 'createdAt' | 'views' | 'inquiriesCount' | 'status'>,
-    initialStatus: ListingStatus = 'pending'
+    _initialStatus: ListingStatus = 'pending'
   ): Promise<Property> => {
-    const safeImages = Array.isArray(newProp.images) && newProp.images.length > 0
-      ? newProp.images.filter((img) => typeof img === 'string' && img.trim().length > 0)
-      : [];
-    const images = safeImages.length > 0
-      ? safeImages
-      : ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&auto=format&fit=crop&q=80'];
-
-    const created: Property = {
-      ...newProp,
-      images,
-      id: `prop-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      views: 1,
-      inquiriesCount: 0,
-      status: initialStatus
+    const { createProperty } = await import('../lib/propertyRepository');
+    const typeMap: Record<string, 'apartment' | 'house' | 'plot' | 'commercial' | 'pg'> = {
+      apartment: 'apartment', villa: 'house', land: 'plot', commercial: 'commercial'
     };
-
-    // Clean data for Firestore document constraints
-    const firestoreData = cleanFirestoreData(created);
-
-    // CRITICAL: Await permanent production database write.
-    // If the database write fails, an error is thrown and the user is NOT shown a false success.
-    try {
-      await setDoc(doc(db, 'properties', created.id), firestoreData);
-      console.log('Property successfully persisted to Firestore:', created.id);
-    } catch (err) {
-      console.error('Failed to persist property to Firestore:', err);
-      handleFirestoreError(err, OperationType.CREATE, `properties/${created.id}`);
-      throw new Error(err instanceof Error ? err.message : 'Failed to save property to database. Please check connection.');
-    }
-
-    // Update state only after confirmed database persistence
-    setProperties(prev => {
-      const exists = prev.some(p => p.id === created.id);
-      if (exists) return prev;
-      return [created, ...prev];
+    const id = await createProperty({
+      title: newProp.title,
+      description: newProp.description || null,
+      city: newProp.city,
+      locality: newProp.locality,
+      purpose: newProp.listingType,
+      property_type: typeMap[newProp.propertyType] || 'apartment',
+      price: newProp.price,
+      area_sqft: newProp.superBuiltUpArea || null,
+      contact_phone: newProp.seller?.phone || null,
+      publish_contact: false
     });
-
-    if (initialStatus === 'approved') {
-      setNewlyPostedId(created.id);
-    }
-
-    return created;
+    // Submitted listings are pending moderation; public listings remain approved-only.
+    return { ...newProp, id, status: 'pending', createdAt: new Date().toISOString(),
+      views: 0, inquiriesCount: 0 };
   };
 
   const updateProperty = async (prop: Property): Promise<void> => {
