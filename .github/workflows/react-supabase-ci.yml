@@ -1,0 +1,32 @@
+name: React Supabase validation
+on:
+  push:
+    branches: [feature/complete-react-supabase]
+    paths: ['react-app/**', '.github/workflows/react-supabase-ci.yml']
+  pull_request:
+    paths: ['react-app/**', '.github/workflows/react-supabase-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: react-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: TypeScript validation
+        run: npm run lint
+      - name: Production build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: npm run build
+      - name: Confirm generated index
+        run: test -s dist/index.html
