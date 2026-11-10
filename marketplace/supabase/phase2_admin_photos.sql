@@ -1,4 +1,10 @@
 -- Phase 2. Run in Supabase SQL Editor as the project owner.
+-- Allow owners to retrieve their own inserted property IDs without exposing other owners' private contact details.
+grant select on public.properties to authenticated;
+drop policy if exists "Owners read own listings" on public.properties;
+create policy "Owners read own listings" on public.properties
+for select to authenticated using (user_id=auth.uid());
+
 create table if not exists public.admin_users (
  user_id uuid primary key references auth.users(id) on delete cascade,
  created_at timestamptz not null default now()
