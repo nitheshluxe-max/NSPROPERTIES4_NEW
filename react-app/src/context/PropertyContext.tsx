@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { supabase } from '../lib/supabase';
 import { Property, PropertyInquiry, UserProfile, PropertyFilters, ListingStatus, VisitorStats, RegisteredLead, LeadRegistrationData } from '../types/property';
 import { INITIAL_PROPERTIES, INITIAL_INQUIRIES, INITIAL_USERS } from '../data/seedProperties';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
@@ -297,7 +298,7 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   // Admin Security & Route Isolation - Login removed as requested; direct access enabled
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(true);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
 
   const [comparisonList, setComparisonList] = useState<string[]>([]);
@@ -1032,30 +1033,42 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [favorites]);
 
+  // Authentication is verified against Supabase admin_users, never a local password flag.
+  useEffect(() => {
+    let active = true;
+    const verify = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!active) return;
+      if (!user) { setIsAdminAuthenticated(false); return; }
+      const { data, error } = await supabase.from('admin_users').select('user_id').eq('user_id', user.id).maybeSingle();
+      if (active) setIsAdminAuthenticated(!error && !!data);
+    };
+    void verify();
+    const { data: subscription } = supabase.auth.onAuthStateChange(() => { void verify(); });
+    return () => { active = false; subscription.subscription.unsubscribe(); };
+  }, []);
+
   const loginAdmin = (_emailOrPass?: string, _pass?: string): boolean => {
-    setIsAdminAuthenticated(true);
-    setCurrentView('admin');
-    if (window.location.hash !== '#admin') {
-      window.location.hash = '#admin';
-    }
-    setIsAdminLoginModalOpen(false);
-    return true;
+    // Legacy synchronous interface: never grant access without server verification.
+    setIsAdminLoginModalOpen(true);
+    return false;
   };
 
   const logoutAdmin = () => {
+    void supabase.auth.signOut();
+    setIsAdminAuthenticated(false);
     setCurrentView('portal');
     if (window.location.hash.includes('admin')) {
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      // Also trigger a clean hash reset
-      window.location.hash = '';
     }
   };
 
   const navigateToAdmin = () => {
-    if (window.location.hash !== '#admin') {
-      window.location.hash = '#admin';
+    if (!isAdminAuthenticated) {
+      setIsAdminLoginModalOpen(true);
+      return;
     }
-    setIsAdminAuthenticated(true);
+    window.location.hash = '#admin';
     setCurrentView('admin');
   };
 
