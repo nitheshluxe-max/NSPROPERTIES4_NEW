@@ -1173,36 +1173,32 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const addInquiry = async (inq: Omit<PropertyInquiry, 'id' | 'createdAt' | 'status'>): Promise<PropertyInquiry> => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error('Please sign in with Supabase before submitting an inquiry.');
+    const { data, error } = await supabase.from('property_inquiries').insert({
+      property_id: inq.propertyId,
+      user_id: user.id,
+      user_name: inq.userName,
+      user_phone: inq.userPhone,
+      user_email: inq.userEmail,
+      inquiry_type: inq.inquiryType,
+      scheduled_date: inq.scheduledDate || null,
+      message: inq.message
+    }).select('id,created_at,status').single();
+    if (error) throw error;
     const created: PropertyInquiry = {
-      ...inq,
-      id: `inq-${Date.now()}`,
-      status: 'new',
-      createdAt: new Date().toISOString()
+      ...inq, id: data.id, createdAt: data.created_at, status: data.status
     };
-
-    const firestoreData = cleanFirestoreData(created);
-    try {
-      await setDoc(doc(db, 'inquiries', created.id), firestoreData);
-      setInquiries(prev => [created, ...prev]);
-      setProperties(prev => prev.map(p => p.id === inq.propertyId ? { ...p, inquiriesCount: p.inquiriesCount + 1 } : p));
-      return created;
-    } catch (err) {
-      console.error('Failed to save inquiry to Firestore:', err);
-      handleFirestoreError(err, OperationType.CREATE, `inquiries/${created.id}`);
-      // Keep optimistic lead so visitor inquiry is not lost locally
-      setInquiries(prev => [created, ...prev]);
-      return created;
-    }
+    setInquiries(prev => [created, ...prev]);
+    return created;
   };
 
   const updateInquiryStatus = async (id: string, status: PropertyInquiry['status']): Promise<void> => {
-    try {
-      await updateDoc(doc(db, 'inquiries', id), { status });
-      setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
-    } catch (err) {
-      console.error('Failed to update inquiry status:', err);
-      handleFirestoreError(err, OperationType.UPDATE, `inquiries/${id}`);
-    }
+    const { error } = await supabase.rpc('admin_set_inquiry_status', {
+      target_id: id, new_status: status
+    });
+    if (error) throw error;
+    setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
   };
 
   const toggleFavorite = (id: string) => {
