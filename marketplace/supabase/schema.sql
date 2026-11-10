@@ -28,6 +28,7 @@ create or replace view public.public_properties with (security_invoker=false) as
 revoke all on public.properties from anon,authenticated;
 grant select on public.public_properties to anon,authenticated;
 grant insert on public.properties to authenticated;
+drop policy if exists "Users insert own pending listings" on public.properties;
 create policy "Users insert own pending listings" on public.properties for insert to authenticated
  with check(auth.uid()=user_id and status='pending');
 -- View owner executes the approved-only projection; direct table reads remain revoked.
