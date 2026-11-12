@@ -1,13 +1,28 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import { getFirestore, doc } from 'firebase/firestore';
 
-// Initialize Firebase App
+// Firebase web configuration is provided via Vite environment variables.
+// This keeps the build independent of an AI Studio-only local JSON file.
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'missing-firebase-api-key',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || undefined,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'missing-firebase-project',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || undefined,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || undefined,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || 'missing-firebase-app-id',
+};
+const firestoreDatabaseId = import.meta.env.VITE_FIRESTORE_DATABASE_ID || '(default)';
+const firebaseConfigured = Boolean(
+  import.meta.env.VITE_FIREBASE_API_KEY &&
+  import.meta.env.VITE_FIREBASE_PROJECT_ID &&
+  import.meta.env.VITE_FIREBASE_APP_ID
+);
+if (!firebaseConfigured) {
+  console.warn('Firebase is not configured: Firestore-backed features will not work until VITE_FIREBASE_* settings are supplied.');
+}
 const app = initializeApp(firebaseConfig);
-
-// CRITICAL: Must pass firestoreDatabaseId
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, firestoreDatabaseId);
 export const auth = getAuth(app);
 
 export enum OperationType {
