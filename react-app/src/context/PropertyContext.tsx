@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { supabase } from '../lib/supabase';
 import { Property, PropertyInquiry, UserProfile, PropertyFilters, ListingStatus, VisitorStats, RegisteredLead, LeadRegistrationData } from '../types/property';
 import { INITIAL_PROPERTIES, INITIAL_INQUIRIES, INITIAL_USERS } from '../data/seedProperties';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
@@ -297,7 +298,7 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   // Admin Security & Route Isolation - Login removed as requested; direct access enabled
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(true);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
 
   const [comparisonList, setComparisonList] = useState<string[]>([]);
@@ -410,7 +411,7 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (isAdminRoute) {
         setCurrentView('admin');
-        setIsAdminAuthenticated(true);
+        // Route changes must never elevate privileges. Supabase verifies membership.
       } else if (currentView === 'admin' && !isAdminRoute) {
         // Return to portal when user navigates away from #admin
         setCurrentView('portal');
@@ -456,54 +457,51 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => window.removeEventListener('hashchange', checkPropertyDeepLink);
   }, [properties]);
 
-  // Real-time Firestore sync: properties
+  // Public listings come exclusively from the Supabase approved-only view.
+  // Do not merge demo seed listings into production search results.
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, 'properties'),
-      async (snapshot) => {
+    let active = true;
+    const load = async () => {
+      try {
+        const { listApprovedProperties } = await import('../lib/propertyRepository');
+        const rows = await listApprovedProperties();
+        if (!active) return;
+        const mapped = rows.map(row => normalizeProperty({
+          id: row.id,
+          title: row.title,
+          description: row.description || '',
+          city: row.city,
+          locality: row.locality,
+          listingType: row.purpose === 'lease' ? 'rent' : row.purpose,
+          propertyType: row.property_type === 'plot' ? 'land' :
+            row.property_type === 'house' ? 'villa' :
+            row.property_type === 'pg' ? 'apartment' : row.property_type,
+          price: Number(row.price),
+          superBuiltUpArea: Number(row.area_sqft) || 1200,
+          images: row.photoUrls,
+          status: 'approved',
+          seller: {
+            id: 'public-listing',
+            name: 'Property owner',
+            phone: row.contact_phone || '',
+            email: '',
+            type: 'owner',
+            verified: false
+          },
+          createdAt: row.created_at
+        }));
+        setProperties(mapped);
         setIsFirebaseConnected(true);
-        const loaded: Property[] = [];
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          if (data) {
-            loaded.push(normalizeProperty(data));
-          }
-        });
-
-        // Merge loaded Firestore documents with INITIAL_PROPERTIES
-        // This guarantees previous properties, seed data, and new listings coexist seamlessly
-        const loadedIds = new Set(loaded.map((p) => p.id));
-        const combined = [
-          ...loaded,
-          ...INITIAL_PROPERTIES.filter((p) => !loadedIds.has(p.id)).map((p) => normalizeProperty(p))
-        ];
-
-        // Sort newest listings first
-        combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setProperties(combined);
-
-        // Seed missing initial properties to Firestore in the background
-        const missingSeeds = INITIAL_PROPERTIES.filter((p) => !loadedIds.has(p.id));
-        if (missingSeeds.length > 0) {
-          try {
-            const batch = writeBatch(db);
-            missingSeeds.slice(0, 50).forEach((prop) => {
-              const docRef = doc(db, 'properties', prop.id);
-              batch.set(docRef, cleanFirestoreData(prop), { merge: true });
-            });
-            batch.commit().catch((seedCommitErr) => console.warn('Background seed commit notice:', seedCommitErr));
-          } catch (seedErr) {
-            console.warn('Initial properties Firestore seed notice:', seedErr);
-          }
-        }
-      },
-      (error) => {
-        setIsFirebaseConnected(false);
-        handleFirestoreError(error, OperationType.GET, 'properties');
+      } catch (error) {
+        console.error('Supabase property loading failed:', error);
+        if (active) setIsFirebaseConnected(false);
       }
-    );
-
-    return () => unsubscribe();
+    };
+    void load();
+    const channel = supabase.channel('approved-properties-refresh')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, () => { void load(); })
+      .subscribe();
+    return () => { active = false; void supabase.removeChannel(channel); };
   }, []);
 
   // Real-time Firestore sync: inquiries
@@ -1032,30 +1030,42 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [favorites]);
 
+  // Authentication is verified against Supabase admin_users, never a local password flag.
+  useEffect(() => {
+    let active = true;
+    const verify = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!active) return;
+      if (!user) { setIsAdminAuthenticated(false); return; }
+      const { data, error } = await supabase.from('admin_users').select('user_id').eq('user_id', user.id).maybeSingle();
+      if (active) setIsAdminAuthenticated(!error && !!data);
+    };
+    void verify();
+    const { data: subscription } = supabase.auth.onAuthStateChange(() => { void verify(); });
+    return () => { active = false; subscription.subscription.unsubscribe(); };
+  }, []);
+
   const loginAdmin = (_emailOrPass?: string, _pass?: string): boolean => {
-    setIsAdminAuthenticated(true);
-    setCurrentView('admin');
-    if (window.location.hash !== '#admin') {
-      window.location.hash = '#admin';
-    }
-    setIsAdminLoginModalOpen(false);
-    return true;
+    // Legacy synchronous interface: never grant access without server verification.
+    setIsAdminLoginModalOpen(true);
+    return false;
   };
 
   const logoutAdmin = () => {
+    void supabase.auth.signOut();
+    setIsAdminAuthenticated(false);
     setCurrentView('portal');
     if (window.location.hash.includes('admin')) {
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      // Also trigger a clean hash reset
-      window.location.hash = '';
     }
   };
 
   const navigateToAdmin = () => {
-    if (window.location.hash !== '#admin') {
-      window.location.hash = '#admin';
+    if (!isAdminAuthenticated) {
+      setIsAdminLoginModalOpen(true);
+      return;
     }
-    setIsAdminAuthenticated(true);
+    window.location.hash = '#admin';
     setCurrentView('admin');
   };
 
@@ -1083,51 +1093,27 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const addProperty = async (
     newProp: Omit<Property, 'id' | 'createdAt' | 'views' | 'inquiriesCount' | 'status'>,
-    initialStatus: ListingStatus = 'pending'
+    _initialStatus: ListingStatus = 'pending'
   ): Promise<Property> => {
-    const safeImages = Array.isArray(newProp.images) && newProp.images.length > 0
-      ? newProp.images.filter((img) => typeof img === 'string' && img.trim().length > 0)
-      : [];
-    const images = safeImages.length > 0
-      ? safeImages
-      : ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&auto=format&fit=crop&q=80'];
-
-    const created: Property = {
-      ...newProp,
-      images,
-      id: `prop-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      views: 1,
-      inquiriesCount: 0,
-      status: initialStatus
+    const { createProperty } = await import('../lib/propertyRepository');
+    const typeMap: Record<string, 'apartment' | 'house' | 'plot' | 'commercial' | 'pg'> = {
+      apartment: 'apartment', villa: 'house', land: 'plot', commercial: 'commercial'
     };
-
-    // Clean data for Firestore document constraints
-    const firestoreData = cleanFirestoreData(created);
-
-    // CRITICAL: Await permanent production database write.
-    // If the database write fails, an error is thrown and the user is NOT shown a false success.
-    try {
-      await setDoc(doc(db, 'properties', created.id), firestoreData);
-      console.log('Property successfully persisted to Firestore:', created.id);
-    } catch (err) {
-      console.error('Failed to persist property to Firestore:', err);
-      handleFirestoreError(err, OperationType.CREATE, `properties/${created.id}`);
-      throw new Error(err instanceof Error ? err.message : 'Failed to save property to database. Please check connection.');
-    }
-
-    // Update state only after confirmed database persistence
-    setProperties(prev => {
-      const exists = prev.some(p => p.id === created.id);
-      if (exists) return prev;
-      return [created, ...prev];
+    const id = await createProperty({
+      title: newProp.title,
+      description: newProp.description || null,
+      city: newProp.city,
+      locality: newProp.locality,
+      purpose: newProp.listingType,
+      property_type: typeMap[newProp.propertyType] || 'apartment',
+      price: newProp.price,
+      area_sqft: newProp.superBuiltUpArea || null,
+      contact_phone: newProp.seller?.phone || null,
+      publish_contact: false
     });
-
-    if (initialStatus === 'approved') {
-      setNewlyPostedId(created.id);
-    }
-
-    return created;
+    // Submitted listings are pending moderation; public listings remain approved-only.
+    return { ...newProp, id, status: 'pending', createdAt: new Date().toISOString(),
+      views: 0, inquiriesCount: 0 };
   };
 
   const updateProperty = async (prop: Property): Promise<void> => {
@@ -1147,20 +1133,11 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updatePropertyStatus = async (id: string, status: ListingStatus): Promise<void> => {
-    try {
-      await updateDoc(doc(db, 'properties', id), { status });
-      setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
-      if (status === 'approved') {
-        setNewlyPostedId(id);
-      }
-      if (selectedProperty?.id === id) {
-        setSelectedProperty(prev => prev && prev.id === id ? { ...prev, status } : prev);
-      }
-      console.log(`Property ${id} status updated to: ${status}`);
-    } catch (err) {
-      console.error('Failed to update property status in Firestore:', err);
-      handleFirestoreError(err, OperationType.UPDATE, `properties/${id}`);
-      throw new Error(err instanceof Error ? err.message : 'Failed to update status in database');
+    const { reviewProperty } = await import('../lib/propertyRepository');
+    await reviewProperty(id, status);
+    setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+    if (selectedProperty?.id === id) {
+      setSelectedProperty(prev => prev?.id === id ? { ...prev, status } : prev);
     }
   };
 
@@ -1196,36 +1173,32 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const addInquiry = async (inq: Omit<PropertyInquiry, 'id' | 'createdAt' | 'status'>): Promise<PropertyInquiry> => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error('Please sign in with Supabase before submitting an inquiry.');
+    const { data, error } = await supabase.from('property_inquiries').insert({
+      property_id: inq.propertyId,
+      user_id: user.id,
+      user_name: inq.userName,
+      user_phone: inq.userPhone,
+      user_email: inq.userEmail,
+      inquiry_type: inq.inquiryType,
+      scheduled_date: inq.scheduledDate || null,
+      message: inq.message
+    }).select('id,created_at,status').single();
+    if (error) throw error;
     const created: PropertyInquiry = {
-      ...inq,
-      id: `inq-${Date.now()}`,
-      status: 'new',
-      createdAt: new Date().toISOString()
+      ...inq, id: data.id, createdAt: data.created_at, status: data.status
     };
-
-    const firestoreData = cleanFirestoreData(created);
-    try {
-      await setDoc(doc(db, 'inquiries', created.id), firestoreData);
-      setInquiries(prev => [created, ...prev]);
-      setProperties(prev => prev.map(p => p.id === inq.propertyId ? { ...p, inquiriesCount: p.inquiriesCount + 1 } : p));
-      return created;
-    } catch (err) {
-      console.error('Failed to save inquiry to Firestore:', err);
-      handleFirestoreError(err, OperationType.CREATE, `inquiries/${created.id}`);
-      // Keep optimistic lead so visitor inquiry is not lost locally
-      setInquiries(prev => [created, ...prev]);
-      return created;
-    }
+    setInquiries(prev => [created, ...prev]);
+    return created;
   };
 
   const updateInquiryStatus = async (id: string, status: PropertyInquiry['status']): Promise<void> => {
-    try {
-      await updateDoc(doc(db, 'inquiries', id), { status });
-      setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
-    } catch (err) {
-      console.error('Failed to update inquiry status:', err);
-      handleFirestoreError(err, OperationType.UPDATE, `inquiries/${id}`);
-    }
+    const { error } = await supabase.rpc('admin_set_inquiry_status', {
+      target_id: id, new_status: status
+    });
+    if (error) throw error;
+    setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
   };
 
   const toggleFavorite = (id: string) => {

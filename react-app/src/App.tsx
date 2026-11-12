@@ -204,7 +204,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
     null;
 
   // If in admin view, render the Admin Console
-  if (currentView === 'admin') {
+  if (currentView === 'admin' && isAdminAuthenticated) {
     return <AdminConsole />;
   }
 
@@ -603,11 +603,11 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
 };
 
 const MainApp: React.FC = () => {
-  const { currentView } = useProperty();
+  const { currentView, isAdminAuthenticated, setIsAdminLoginModalOpen } = useProperty();
   const [isCompareOpen, setIsCompareOpen] = useState(false);
 
   // Directly render the isolated Admin Console if #admin is open
-  if (currentView === 'admin') {
+  if (currentView === 'admin' && isAdminAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-100">
         <AdminConsole />
@@ -618,6 +618,8 @@ const MainApp: React.FC = () => {
 
   return (
     <>
+      {currentView === 'admin' && !isAdminAuthenticated && <div className="bg-amber-50 text-amber-900 text-center p-3">Admin access requires a verified account. <button className="underline font-semibold" onClick={() => setIsAdminLoginModalOpen(true)}>Sign in</button></div>}
+      <AdminLoginModal />
       <Navbar onOpenCompare={() => setIsCompareOpen(true)} />
       <PortalContent onOpenCompare={() => setIsCompareOpen(true)} />
       <PropertyDetailModalWrapper />
