@@ -17,7 +17,7 @@ import {
 export const COMPANY_NAME = 'NS Properties 4';
 export const COMPANY_PHONE = '8073266325';
 export const COMPANY_PHONE_DISPLAY = '+91 80732 66325';
-export const COMPANY_LOGO = '/assets/aistudio/WhatsApp_Image_2026-10-10_at_11.50.29_AM_4607a570.jpeg';
+export const COMPANY_LOGO = import.meta.env.BASE_URL + 'assets/logo.svg';
 
 export const getDeviceType = (): 'mobile' | 'desktop' | 'tablet' => {
   if (typeof navigator === 'undefined') return 'desktop';

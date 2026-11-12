@@ -184,6 +184,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
               </div>
             )}
 
+          <a href="#free-marketplace" className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100">Free Marketplace</a>
             {/* Primary Action CTA: Post Property FREE (0% Brokerage) */}
             <button
               onClick={() => setIsPostModalOpen(true)}
@@ -275,6 +276,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
             </button>
           </div>
 
+          <a href="#free-marketplace" onClick={() => setMobileMenuOpen(false)} className="block p-3 rounded-lg text-center bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">Free Marketplace · Post & Contact Free</a>
           <a
             href={`tel:${COMPANY_PHONE}`}
             className="flex items-center justify-center gap-2 w-full py-3 bg-blue-50 text-blue-800 font-bold text-xs rounded-lg border border-blue-200 active:bg-blue-100 min-h-[44px]"
