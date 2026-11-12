@@ -8,6 +8,7 @@ import {
   COMPANY_LOGO
 } from './context/PropertyContext';
 import { Navbar } from './components/Navbar';
+import { FreeMarketplace } from './components/FreeMarketplace';
 import { HeroSearch } from './components/HeroSearch';
 import { FilterBar } from './components/FilterBar';
 import { PropertyCard } from './components/PropertyCard';
@@ -605,6 +606,9 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
 const MainApp: React.FC = () => {
   const { currentView, isAdminAuthenticated, setIsAdminLoginModalOpen } = useProperty();
   const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [marketplaceOpen, setMarketplaceOpen] = useState(() => window.location.hash === '#free-marketplace');
+  useEffect(() => { const update = () => setMarketplaceOpen(window.location.hash === '#free-marketplace'); window.addEventListener('hashchange', update); return () => window.removeEventListener('hashchange', update); }, []);
+  if (marketplaceOpen) return <FreeMarketplace />;
 
   // Directly render the isolated Admin Console if #admin is open
   if (currentView === 'admin' && isAdminAuthenticated) {
