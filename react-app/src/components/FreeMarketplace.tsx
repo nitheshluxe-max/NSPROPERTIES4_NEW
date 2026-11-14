@@ -44,7 +44,7 @@ export function FreeMarketplace() {
     try {
       if (authMode === 'signup') {
         const phone = String(fields.get('phone') || '').trim();
-        if (!/^\\+?[0-9]{10,15}$/.test(phone)) throw new Error('Enter a valid phone number (10–15 digits).');
+        if (!/^(?:[0-9]{10}|[+]91[0-9]{10})$/.test(phone)) throw new Error('Enter a 10-digit Indian mobile number, optionally prefixed with +91.');
         if (password.length < 8) throw new Error('Password must be at least 8 characters.');
         const { data, error } = await supabase.auth.signUp({
           email, password, options: { data: { contact_phone: phone },
@@ -192,7 +192,7 @@ export function FreeMarketplace() {
           </div>
           <form onSubmit={submitAccount} className="grid sm:grid-cols-2 gap-3">
             <label className="text-sm">Email address<input required name="email" type="email" autoComplete="email" className={inputClass + ' mt-1'}/></label>
-            {authMode === 'signup' && <label className="text-sm">Phone number (no SMS verification)<input required name="phone" type="tel" inputMode="tel" pattern="\\+?[0-9]{10,15}" placeholder="9876543210" className={inputClass + ' mt-1'}/></label>}
+            {authMode === 'signup' && <label className="text-sm">Phone number (no SMS verification)<input required name="phone" type="tel" inputMode="tel" pattern="[0-9]{10}|[+]91[0-9]{10}" placeholder="9876543210" className={inputClass + ' mt-1'}/></label>}
             <label className="text-sm">Password<input required name="password" type="password" autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'} minLength={authMode === 'signup' ? 8 : undefined} className={inputClass + ' mt-1'}/></label>
             <button disabled={authBusy} className="sm:col-span-2 bg-blue-700 text-white rounded-lg px-5 py-3 disabled:opacity-50">{authBusy ? 'Please wait…' : authMode === 'signup' ? 'Sign up' : 'Sign in'}</button>
           </form>
