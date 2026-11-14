@@ -532,22 +532,20 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
           <span className="text-[10px] font-bold">WhatsApp</span>
         </a>
 
-        {/* Mode Switcher: List vs Map */}
-        <button
-          onClick={() => setMobileViewMode((prev) => (prev === 'list' ? 'map' : 'list'))}
-          className="flex-1 flex flex-col items-center justify-center py-1 text-slate-700 active:text-blue-600 cursor-pointer min-h-[44px]"
-        >
-          {mobileViewMode === 'list' ? (
-            <>
-              <MapIcon className="w-5 h-5 text-blue-600 mb-0.5" />
-              <span className="text-[10px] font-bold">Map View</span>
-            </>
-          ) : (
-            <>
-              <List className="w-5 h-5 text-blue-600 mb-0.5" />
-              <span className="text-[10px] font-bold">List View</span>
-            </>
-          )}
+        {/* Dedicated mobile listings and map controls from reference design */}
+        <button type="button" onClick={() => {
+          setMobileViewMode('list');
+          document.getElementById('map-search-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }} className={`flex-1 min-h-[44px] flex flex-col items-center justify-center rounded-xl ${mobileViewMode === 'list' ? 'bg-blue-50 text-blue-700 font-extrabold' : 'text-slate-700'}`}>
+          <List className="w-5 h-5 text-blue-600 mb-0.5" />
+          <span className="text-[10px] font-bold">Listings</span>
+        </button>
+        <button type="button" onClick={() => {
+          setMobileViewMode('map');
+          document.getElementById('map-search-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }} className={`flex-1 min-h-[44px] flex flex-col items-center justify-center rounded-xl ${mobileViewMode === 'map' ? 'bg-blue-50 text-blue-700 font-extrabold' : 'text-slate-700'}`}>
+          <MapIcon className="w-5 h-5 text-blue-600 mb-0.5" />
+          <span className="text-[10px] font-bold">Map View</span>
         </button>
 
         {/* Post Property FREE */}
