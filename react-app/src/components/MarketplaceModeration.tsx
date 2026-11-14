@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { listAdminProperties, reviewProperty } from '../lib/propertyRepository';
+import { supabase } from '../lib/supabase';
 
 type ReviewStatus = 'pending' | 'approved' | 'rejected';
 type ReviewItem = {
@@ -18,13 +19,36 @@ export function MarketplaceModeration() {
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [media, setMedia] = useState<Record<string, { photos: string[]; brochurePath?: string }>>({});
+  async function viewBrochure(path: string) {
+    const { data, error } = await supabase.storage.from('property-brochures').createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) { setError(error?.message || 'Unable to open brochure.'); return; }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  }
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const data = await listAdminProperties();
-      setProperties((data ?? []) as ReviewItem[]);
+      const entries = (data ?? []) as ReviewItem[];
+      setProperties(entries);
+      if (entries.length) {
+        const ids = entries.map(item => item.id);
+        const [photos, brochures] = await Promise.all([
+          supabase.from('property_photos').select('property_id,storage_path,sort_order').in('property_id', ids).order('sort_order'),
+          supabase.from('property_brochures').select('property_id,storage_path').in('property_id', ids)
+        ]);
+        if (photos.error || brochures.error) throw photos.error || brochures.error;
+        const next: Record<string, { photos: string[]; brochurePath?: string }> = {};
+        entries.forEach(item => {
+          next[item.id] = {
+            photos: (photos.data || []).filter(p => p.property_id === item.id).map(p => supabase.storage.from('property-photos').getPublicUrl(p.storage_path).data.publicUrl),
+            brochurePath: brochures.data?.find(b => b.property_id === item.id)?.storage_path
+          };
+        });
+        setMedia(next);
+      } else setMedia({});
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load marketplace submissions.');
     } finally {
@@ -87,7 +111,9 @@ export function MarketplaceModeration() {
               <div className="text-xs text-slate-500">Submitted {new Date(item.created_at).toLocaleDateString('en-IN')} · {item.status}</div>
               {item.contact_phone && <div className="text-xs text-slate-600">Seller contact (admin only): {item.contact_phone}</div>}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
+              {media[item.id]?.photos.map(url => <img key={url} src={url} alt={item.title + ' photo'} loading="lazy" className="h-16 w-20 object-cover rounded-lg" />)}
+              {media[item.id]?.brochurePath && <button type="button" className="px-3 py-2 rounded-lg border border-blue-300 text-blue-800 text-sm" onClick={() => void viewBrochure(media[item.id].brochurePath!)}>View brochure</button>}
               {item.status !== 'approved' && <button type="button" disabled={!!workingId}
                 onClick={() => void changeStatus(item, 'approved')}
                 className="px-3 py-2 rounded-lg bg-emerald-700 text-white text-sm disabled:opacity-50">Approve</button>}
