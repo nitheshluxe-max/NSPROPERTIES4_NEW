@@ -5,7 +5,6 @@ import { PropertyCategory, ListingPurpose } from '../types/property';
 
 export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare }) => {
   const {
-    setIsPostModalOpen,
     favorites,
     comparisonList,
     filters,
