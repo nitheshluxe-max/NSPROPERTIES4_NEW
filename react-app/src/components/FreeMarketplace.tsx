@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { ReferencePostPropertyForm } from './ReferencePostPropertyForm';
 
 type Listing = {
   id: string; title: string; city: string; locality: string; price: number;
@@ -20,6 +21,11 @@ export function FreeMarketplace() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [postOpen, setPostOpen] = useState(() => window.location.hash === '#post-property');
+  useEffect(() => {
+    const sync = () => setPostOpen(window.location.hash === '#post-property');
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
   const [account, setAccount] = useState<{ id: string; email?: string } | null>(null);
   const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
   const [authBusy, setAuthBusy] = useState(false);
@@ -48,7 +54,7 @@ export function FreeMarketplace() {
         if (password.length < 8) throw new Error('Password must be at least 8 characters.');
         const { data, error } = await supabase.auth.signUp({
           email, password, options: { data: { contact_phone: phone },
-            emailRedirectTo: window.location.origin + window.location.pathname + '#free-marketplace' }
+            emailRedirectTo: window.location.origin + window.location.pathname + '#post-property' }
         });
         if (error) throw error;
         if (!data.session) setAuthMessage('Account created. Confirm your email using the link sent to your inbox, then sign in to post.');
@@ -68,8 +74,6 @@ export function FreeMarketplace() {
     else { setAccount(null); setAuthMessage('Signed out.'); }
   }
   const [refresh, setRefresh] = useState(0);
-  const [photos, setPhotos] = useState<File[]>([]);
-  const [brochure, setBrochure] = useState<File | null>(null);
   const [brochureError, setBrochureError] = useState('');
   async function openBrochure(path: string) {
     setBrochureError('');
@@ -117,53 +121,6 @@ export function FreeMarketplace() {
   }, [purpose, type, refresh]);
   const visible = items.filter(p => [p.title, p.city, p.locality].some(s => s.toLowerCase().includes(query.toLowerCase().trim())));
 
-  async function submitProperty(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    const form = event.currentTarget;
-    const fields = new FormData(form);
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user || user.is_anonymous || !user.email) {
-      setBusy(false);
-      setMessage('Create an account or sign in with email and password before posting.');
-      return;
-    }
-    const contact = String(fields.get('contact_phone') || '').trim();
-    const publish = fields.get('publish_contact') === 'on';
-    if (publish && !contact) { setBusy(false); setMessage('Enter a phone number if you want it published.'); return; }
-    if (photos.length > 6 || photos.some(f => !['image/jpeg','image/png','image/webp'].includes(f.type) || f.size > 5 * 1024 * 1024)) { setBusy(false); setMessage('Choose up to 6 JPG, PNG or WebP photos (5 MB each).'); return; }
-    if (brochure && (brochure.type !== 'application/pdf' || brochure.size > 10 * 1024 * 1024)) { setBusy(false); setMessage('Brochure must be a PDF under 10 MB.'); return; }
-    const { data: inserted, error } = await supabase.from('properties').insert({
-      user_id: user.id, title: String(fields.get('title') || '').trim(),
-      city: String(fields.get('city') || '').trim(), locality: String(fields.get('locality') || '').trim(),
-      purpose: fields.get('purpose'), property_type: fields.get('property_type'),
-      price: Number(fields.get('price')), area_sqft: fields.get('area_sqft') ? Number(fields.get('area_sqft')) : null,
-      description: String(fields.get('description') || '').trim(),
-      contact_phone: contact || null, publish_contact: publish, status: 'pending'
-    }).select('id').single();
-    if (error || !inserted) { setBusy(false); setMessage('Submission failed: ' + (error?.message || 'Unknown error')); return; }
-    try {
-      for (const [index, file] of photos.entries()) {
-        const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
-        const path = `${user.id}/${inserted.id}/${crypto.randomUUID()}.${ext}`;
-        const upload = await supabase.storage.from('property-photos').upload(path, file, { contentType: file.type, upsert: false });
-        if (upload.error) throw upload.error;
-        const linked = await supabase.from('property_photos').insert({ property_id: inserted.id, storage_path: path, sort_order: index });
-        if (linked.error) throw linked.error;
-      }
-      if (brochure) {
-        const path = `${user.id}/${inserted.id}/${crypto.randomUUID()}.pdf`;
-        const upload = await supabase.storage.from('property-brochures').upload(path, brochure, { contentType: 'application/pdf', upsert: false });
-        if (upload.error) throw upload.error;
-        const linked = await supabase.from('property_brochures').insert({ property_id: inserted.id, storage_path: path, file_name: brochure.name });
-        if (linked.error) throw linked.error;
-      }
-      setMessage('Property and media submitted for admin review. They will appear publicly after approval.');
-      setPhotos([]); setBrochure(null); form.reset(); setPostOpen(false); setRefresh(v => v + 1);
-    } catch (uploadError) {
-      setMessage('Property saved as pending, but media upload failed: ' + (uploadError instanceof Error ? uploadError.message : 'Unknown error') + '. Contact the administrator before approval.');
-    } finally { setBusy(false); }
-  }
   const inputClass = 'w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white text-slate-900';
   return <main className="min-h-screen bg-slate-50">
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -202,25 +159,7 @@ export function FreeMarketplace() {
           <span>Signed in as <strong>{account.email}</strong></span>
           <button type="button" onClick={() => void signOutMarketplace()} className="text-blue-700 underline">Sign out</button>
         </div>}
-        {account && <form onSubmit={submitProperty} className="grid sm:grid-cols-2 gap-3">
-          <input name="title" required minLength={5} maxLength={120} placeholder="Property title" className={inputClass + ' sm:col-span-2'}/>
-          <input name="city" required placeholder="City" className={inputClass}/>
-          <input name="locality" required placeholder="Locality" className={inputClass}/>
-          <select name="purpose" className={inputClass}><option value="sale">For sale</option><option value="rent">For rent</option><option value="lease">For lease</option></select>
-          <select name="property_type" className={inputClass}><option value="apartment">Apartment</option><option value="house">House</option><option value="plot">Plot</option><option value="commercial">Commercial</option><option value="pg">PG</option></select>
-          <input name="price" required type="number" min="1" step="1" placeholder="Price in ₹" className={inputClass}/>
-          <input name="area_sqft" type="number" min="1" placeholder="Area in sq ft" className={inputClass}/>
-          <input name="contact_phone" type="tel" pattern="[0-9+() -]{7,20}" placeholder="Contact phone (optional)" className={inputClass + ' sm:col-span-2'}/>
-          <textarea name="description" maxLength={3000} placeholder="Property description" className={inputClass + ' sm:col-span-2'} rows={3}/>
-          <label className="sm:col-span-2 text-sm font-medium">Property images (up to 6, JPG/PNG/WebP, max 5 MB each)
-            <input type="file" accept="image/jpeg,image/png,image/webp" multiple className={inputClass + ' mt-1'} onChange={e => setPhotos(Array.from(e.target.files || []))}/>
-          </label>
-          <label className="sm:col-span-2 text-sm font-medium">Property brochure (optional PDF, max 10 MB)
-            <input type="file" accept="application/pdf,.pdf" className={inputClass + ' mt-1'} onChange={e => setBrochure(e.target.files?.[0] || null)}/>
-          </label>
-          <label className="sm:col-span-2 flex gap-2 items-center text-sm"><input name="publish_contact" type="checkbox"/> I consent to publicly displaying my contact phone number</label>
-          <button disabled={busy} className="sm:col-span-2 bg-blue-700 text-white rounded-lg px-5 py-3 font-bold">Submit for review — FREE</button>
-        </form>}
+        {account && <ReferencePostPropertyForm onSubmitted={() => setRefresh(v => v + 1)} />}
       </section>}
       {brochureError && <p role="alert" className="text-red-700 mb-4">{brochureError}</p>}
       <h2 className="text-2xl font-bold mb-4">Available properties {busy ? '· Loading…' : '(' + visible.length + ')'}</h2>
