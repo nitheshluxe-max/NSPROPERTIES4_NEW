@@ -1,5 +1,11 @@
-name: React Pages preview and controlled release
+name: React Pages build and deployment
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'react-app/**'
+      - '.github/workflows/react-pages-release.yml'
   pull_request:
     paths:
       - 'react-app/**'
@@ -41,14 +47,14 @@ jobs:
         run: |
           test -s react-app/dist/index.html
           test -s react-app/dist/assets/logo.svg
-      - name: Upload preview artifact (no live deployment)
+      - name: Upload React build preview artifact
         uses: actions/upload-artifact@v4
         with:
           name: react-pages-preview
           path: react-app/dist/
           retention-days: 7
       - name: Upload Pages release artifact
-        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        if: (github.event_name == 'workflow_dispatch' || github.event_name == 'push') && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: react-app/dist/
