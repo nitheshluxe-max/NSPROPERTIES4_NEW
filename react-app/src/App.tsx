@@ -614,7 +614,7 @@ const MainApp: React.FC = () => {
   const { currentView, isAdminAuthenticated, setIsAdminLoginModalOpen } = useProperty();
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(() => (window.location.hash === '#free-marketplace' || window.location.hash === '#post-property'));
-  useEffect(() => { const update = () => setMarketplaceOpen(window.location.hash === '#free-marketplace'); window.addEventListener('hashchange', update); return () => window.removeEventListener('hashchange', update); }, []);
+  useEffect(() => { const update = () => setMarketplaceOpen(['#free-marketplace', '#post-property'].includes(window.location.hash)); window.addEventListener('hashchange', update); return () => window.removeEventListener('hashchange', update); }, []);
   const [recoveryOpen, setRecoveryOpen] = useState(() => window.location.hash === '#forgot-password' || new URLSearchParams(window.location.search).get('auth') === 'recovery');
   useEffect(() => {
     const sync = () => setRecoveryOpen(window.location.hash === '#forgot-password' || new URLSearchParams(window.location.search).get('auth') === 'recovery');
