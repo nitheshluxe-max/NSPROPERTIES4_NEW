@@ -543,7 +543,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
 
         {/* Post Property FREE */}
         <button
-          onClick={() => setIsPostModalOpen(true)}
+          onClick={() => { window.location.hash = '#post-property'; }}
           className="flex-1 py-2 px-2.5 bg-blue-600 active:bg-blue-700 text-white rounded-xl flex flex-col items-center justify-center shadow-xs cursor-pointer min-h-[44px]"
         >
           <PlusCircle className="w-4 h-4 mb-0.5" />
