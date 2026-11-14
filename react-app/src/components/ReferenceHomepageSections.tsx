@@ -156,6 +156,21 @@ export function ReferenceHomepageTop({ onFocusPropertyOnMap }: { onFocusProperty
           </article>)}
         </div>}
     </section>
+    {favorites.length > 0 && <section id="saved-properties-section" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-10 scroll-mt-20">
+      <div className="rounded-3xl bg-gradient-to-br from-rose-50 via-white to-slate-50 p-5 sm:p-7 border border-rose-200">
+        <div className="flex items-center gap-2 mb-5"><Heart className="w-5 h-5 fill-rose-600 text-rose-600"/>
+          <h2 className="font-black text-xl text-slate-900">Your Saved Properties ({favorites.length})</h2></div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {approved.filter(p => favorites.includes(p.id)).map(p => <button key={p.id} type="button" onClick={() => setSelectedProperty(p)}
+            className="text-left rounded-2xl bg-white border border-slate-200 overflow-hidden hover:shadow-lg">
+            {p.images?.[0] && <img src={p.images[0]} alt={p.title} loading="lazy" className="w-full h-36 object-cover"/>}
+            <div className="p-4"><strong className="block text-slate-900">{p.title}</strong>
+              <span className="block mt-1 text-xs text-slate-500">{p.locality}, {p.city}</span>
+              <span className="block mt-2 text-blue-700 font-bold">{p.priceDisplay}</span></div>
+          </button>)}
+        </div>
+      </div>
+    </section>}
     <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-10 sm:pb-12">
       <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-6 sm:p-8 md:p-10 border border-blue-800/40 shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="space-y-2.5 max-w-2xl">
