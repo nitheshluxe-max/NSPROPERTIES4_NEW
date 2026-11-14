@@ -9,6 +9,7 @@ import {
 } from './context/PropertyContext';
 import { Navbar } from './components/Navbar';
 import { FreeMarketplace } from './components/FreeMarketplace';
+import { ReferenceHomepageTop, ReferenceHomepageBottom } from './components/ReferenceHomepageSections';
 import { HeroSearch } from './components/HeroSearch';
 import { FilterBar } from './components/FilterBar';
 import { PropertyCard } from './components/PropertyCard';
@@ -62,7 +63,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
   // Mobile View Toggle: 'list' or 'map'
   const [mobileViewMode, setMobileViewMode] = useState<'list' | 'map'>('list');
   const [quotaExceeded, setQuotaExceeded] = useState(false);
-  const [showHeroSearch, setShowHeroSearch] = useState(false);
+  const [showHeroSearch, setShowHeroSearch] = useState(true);
 
   const cardsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -232,8 +233,15 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
       {/* Hero Search Console (Collapsible) */}
       {showHeroSearch && <HeroSearch />}
 
-      {/* Dynamic Filter Controls & Sorters */}
-      <FilterBar />
+      {/* Reference homepage sections from NS_PROPERTIES_4 */}
+      <ReferenceHomepageTop onFocusPropertyOnMap={(prop) => {
+        setActiveMapPropertyId(prop.id);
+        setMapFocusTimestamp(Date.now());
+        if (window.innerWidth < 1024) setMobileViewMode('map');
+      }} />
+
+      {/* Interactive map and listings section */}
+      <div id="map-search-section" className="scroll-mt-20"><FilterBar /></div>
 
       {/* Split-Screen Main Content Viewport */}
       <main className="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-3 flex-1 flex flex-col">
@@ -402,6 +410,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
           </div>
         </div>
       </main>
+      <ReferenceHomepageBottom />
 
       {/* MOBILE FULL-SCREEN MAP VIEW MODAL (When Mobile Map View is active) */}
       {mobileViewMode === 'map' && (
