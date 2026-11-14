@@ -104,8 +104,9 @@ export function FreeMarketplace() {
         ]);
         if (!active) return;
         if (photoResult.error || brochureResult.error) {
-          setMessage('Property media unavailable: ' + (photoResult.error?.message || brochureResult.error?.message));
-        } else setMessage('');
+          console.warn('Marketplace media query failed:', photoResult.error?.message || brochureResult.error?.message);
+        }
+        setMessage('');
         setItems(listings.map(p => {
           const brochure = brochureResult.data?.find(b => b.property_id === p.id);
           return { ...p,
