@@ -12,6 +12,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
   } = useProperty();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const scrollToExplorer = () => document.getElementById('map-search-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   const cities = ['All Cities', 'Bengaluru', 'Mumbai', 'Delhi-NCR', 'Pune', 'Hyderabad'];
 
@@ -23,6 +24,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
       zeroBrokerageOnly: !!zeroBrokerage
     }));
     setMobileMenuOpen(false);
+    scrollToExplorer();
   };
 
   return (
@@ -32,12 +34,12 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Open Source PropTech</span>
+            <span>Zero Brokerage Real Estate Marketplace</span>
           </span>
           <span className="text-slate-400">·</span>
-          <span className="text-slate-300">Direct Owner Listings with 0% Brokerage & Developer Resale</span>
+          <span className="text-slate-300">Direct Owners, RERA Registered Builders & Verified Properties</span>
           <span className="text-slate-400">·</span>
-          <span className="text-slate-300">Verified by Google Maps Platform</span>
+          <span className="text-slate-300">Interactive Map Search</span>
         </div>
         <div className="flex items-center gap-4 text-slate-300">
           <span className="text-slate-400">Customer Helpline:</span>
@@ -69,9 +71,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
                 <span className="text-base sm:text-xl font-black tracking-tight text-slate-950 leading-none">
                   {COMPANY_NAME}
                 </span>
-                <span className="text-[10px] font-bold text-blue-700 tracking-wider uppercase mt-1">
-                  PropTech & Maps
-                </span>
+
               </div>
             </button>
 
@@ -96,6 +96,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
 
           {/* Zone 2: Navigation Links (Desktop: Buy, Rent, Commercial, Plots, Zero Brokerage Owners) */}
           <nav className="hidden md:flex items-center gap-4 lg:gap-6 text-xs lg:text-sm font-semibold text-slate-600">
+            <button type="button" onClick={() => { setFilters({ listingType: 'all', propertyType: 'all', city: 'all', locality: '', searchQuery: '', zeroBrokerageOnly: false }); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="hover:text-blue-600 transition-colors whitespace-nowrap shrink-0 cursor-pointer">Home</button>
             <button
               onClick={() => handleNavType('sale', 'all', false)}
               className={`hover:text-blue-600 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
@@ -134,8 +135,9 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
                   : ''
               }`}
             >
-              Plots
+              Plot/Land
             </button>
+            <button type="button" onClick={() => document.getElementById('new-projects-section')?.scrollIntoView({behavior:'smooth'})} className="hover:text-blue-600 transition-colors whitespace-nowrap shrink-0 cursor-pointer">Projects</button>
 
             {/* NoBroker Reference: Zero Brokerage Direct Owners */}
             <button
@@ -175,15 +177,14 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
               </button>
             )}
 
-            {/* Shortlist Badge */}
-            {favorites.length > 0 && (
-              <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-rose-700 bg-rose-50 rounded-lg border border-rose-200">
-                <Heart className="w-3.5 h-3.5 fill-rose-600 text-rose-600" />
-                <span>{favorites.length}</span>
-              </div>
-            )}
+            {/* Saved properties navigation matches reference UX. */}
+            <button type="button" onClick={() => document.getElementById('saved-properties-section')?.scrollIntoView({ behavior: 'smooth' })}
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-slate-100 hover:bg-rose-50 text-slate-700">
+              <Heart className={`w-3.5 h-3.5 text-rose-600 ${favorites.length ? 'fill-rose-600' : ''}`}/> Saved {favorites.length > 0 ? `(${favorites.length})` : ''}
+            </button>
 
-          <a href="#free-marketplace" className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100">Free Marketplace</a>
+          <a href="#post-property" className="hidden xl:inline-flex items-center px-3 py-2 min-h-[40px] text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200">Login / Register</a>
+          <a href="#free-marketplace" className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100">Free Marketplace</a>
             {/* Primary Action CTA: Post Property FREE (0% Brokerage) */}
             <button
               onClick={() => { window.location.hash = "#post-property"; }}
