@@ -108,9 +108,12 @@ export function FreeMarketplace() {
           supabase.from('property_brochures').select('property_id,storage_path,file_name').in('property_id', ids)
         ]);
         if (!active) return;
+        // Media permissions must never prevent approved listing cards from rendering.
+        // Photo/brochure metadata can be repaired separately by the SQL migration.
         if (photoResult.error || brochureResult.error) {
-          setMessage('Property media unavailable: ' + (photoResult.error?.message || brochureResult.error?.message));
-        } else setMessage('');
+          console.warn('Marketplace media query failed:', photoResult.error?.message || brochureResult.error?.message);
+        }
+        setMessage('');
         setItems(listings.map(p => {
           const brochure = brochureResult.data?.find(b => b.property_id === p.id);
           return { ...p,
