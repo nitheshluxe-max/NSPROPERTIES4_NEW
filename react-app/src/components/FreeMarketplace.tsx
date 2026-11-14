@@ -26,11 +26,6 @@ export function FreeMarketplace() {
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
   }, []);
-  useEffect(() => {
-    const sync = () => setPostOpen(window.location.hash === '#post-property');
-    window.addEventListener('hashchange', sync);
-    return () => window.removeEventListener('hashchange', sync);
-  }, []);
   const [account, setAccount] = useState<{ id: string; email?: string } | null>(null);
   const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
   const [authBusy, setAuthBusy] = useState(false);
@@ -108,8 +103,6 @@ export function FreeMarketplace() {
           supabase.from('property_brochures').select('property_id,storage_path,file_name').in('property_id', ids)
         ]);
         if (!active) return;
-        // Media permissions must never prevent approved listing cards from rendering.
-        // Photo/brochure metadata can be repaired separately by the SQL migration.
         if (photoResult.error || brochureResult.error) {
           console.warn('Marketplace media query failed:', photoResult.error?.message || brochureResult.error?.message);
         }
