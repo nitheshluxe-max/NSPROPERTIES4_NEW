@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MarketplaceModeration } from './MarketplaceModeration';
 import { useProperty, COMPANY_NAME, COMPANY_PHONE, COMPANY_PHONE_DISPLAY, COMPANY_LOGO } from '../context/PropertyContext';
 import { Property, ListingStatus, PropertyInquiry, VisitorStats } from '../types/property';
 import { EditPropertyModal } from './EditPropertyModal';
@@ -1115,7 +1116,10 @@ export const AdminConsole: React.FC = () => {
   const { resetToDemoData, logoutAdmin } = useProperty();
   return (
     <AdminErrorBoundary onReset={resetToDemoData} onExit={logoutAdmin}>
-      <AdminConsoleContent />
+      <>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-5"><MarketplaceModeration /></div>
+        <AdminConsoleContent />
+      </>
     </AdminErrorBoundary>
   );
 };
