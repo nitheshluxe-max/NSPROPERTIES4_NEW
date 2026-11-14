@@ -17,7 +17,7 @@ import {
 export const COMPANY_NAME = 'NS Properties 4';
 export const COMPANY_PHONE = '8073266325';
 export const COMPANY_PHONE_DISPLAY = '+91 80732 66325';
-export const COMPANY_LOGO = import.meta.env.BASE_URL + 'assets/logo.svg';
+export const COMPANY_LOGO = import.meta.env.BASE_URL + 'assets/ns-properties-logo.webp';
 
 export const getDeviceType = (): 'mobile' | 'desktop' | 'tablet' => {
   if (typeof navigator === 'undefined') return 'desktop';
