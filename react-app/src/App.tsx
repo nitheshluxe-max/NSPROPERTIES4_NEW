@@ -14,7 +14,6 @@ import { FilterBar } from './components/FilterBar';
 import { PropertyCard } from './components/PropertyCard';
 import { PropertyMap } from './components/PropertyMap';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
-import { PostPropertyModal } from './components/PostPropertyModal';
 import { ContactModal } from './components/ContactModal';
 import { CompareDrawer } from './components/CompareDrawer';
 import { AdminConsole } from './components/AdminConsole';
@@ -57,7 +56,6 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
     filters,
     resetFilters,
     comparisonList,
-    setIsPostModalOpen,
     isAdminAuthenticated
   } = useProperty();
 
@@ -364,7 +362,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
                     Reset All Filters
                   </button>
                   <button
-                    onClick={() => setIsPostModalOpen(true)}
+                    onClick={() => { window.location.hash = '#post-property'; }}
                     className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200 cursor-pointer"
                   >
                     Post a Property
@@ -545,7 +543,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
 
         {/* Post Property FREE */}
         <button
-          onClick={() => setIsPostModalOpen(true)}
+          onClick={() => { window.location.hash = '#post-property'; }}
           className="flex-1 py-2 px-2.5 bg-blue-600 active:bg-blue-700 text-white rounded-xl flex flex-col items-center justify-center shadow-xs cursor-pointer min-h-[44px]"
         >
           <PlusCircle className="w-4 h-4 mb-0.5" />
@@ -608,7 +606,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
 const MainApp: React.FC = () => {
   const { currentView, isAdminAuthenticated, setIsAdminLoginModalOpen } = useProperty();
   const [isCompareOpen, setIsCompareOpen] = useState(false);
-  const [marketplaceOpen, setMarketplaceOpen] = useState(() => window.location.hash === '#free-marketplace');
+  const [marketplaceOpen, setMarketplaceOpen] = useState(() => (window.location.hash === '#free-marketplace' || window.location.hash === '#post-property'));
   useEffect(() => { const update = () => setMarketplaceOpen(window.location.hash === '#free-marketplace'); window.addEventListener('hashchange', update); return () => window.removeEventListener('hashchange', update); }, []);
   const [recoveryOpen, setRecoveryOpen] = useState(() => window.location.hash === '#forgot-password' || new URLSearchParams(window.location.search).get('auth') === 'recovery');
   useEffect(() => {
@@ -641,7 +639,7 @@ const MainApp: React.FC = () => {
       <Navbar onOpenCompare={() => setIsCompareOpen(true)} />
       <PortalContent onOpenCompare={() => setIsCompareOpen(true)} />
       <PropertyDetailModalWrapper />
-      <PostPropertyModalWrapper />
+
       <ContactModalWrapper />
       <CompareDrawer isOpen={isCompareOpen} onClose={() => setIsCompareOpen(false)} />
     </>
@@ -664,17 +662,6 @@ const PropertyDetailModalWrapper: React.FC = () => {
     <PropertyDetailModal
       property={selectedProperty}
       onClose={() => setSelectedProperty(null)}
-    />
-  );
-};
-
-// Wrapper for PostPropertyModal
-const PostPropertyModalWrapper: React.FC = () => {
-  const { isPostModalOpen, setIsPostModalOpen } = useProperty();
-  return (
-    <PostPropertyModal
-      isOpen={isPostModalOpen}
-      onClose={() => setIsPostModalOpen(false)}
     />
   );
 };

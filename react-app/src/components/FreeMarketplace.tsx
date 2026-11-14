@@ -19,7 +19,7 @@ export function FreeMarketplace() {
   const [type, setType] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  const [postOpen, setPostOpen] = useState(false);
+  const [postOpen, setPostOpen] = useState(() => window.location.hash === '#post-property');
   const [account, setAccount] = useState<{ id: string; email?: string } | null>(null);
   const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
   const [authBusy, setAuthBusy] = useState(false);
@@ -169,7 +169,7 @@ export function FreeMarketplace() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-wrap justify-between gap-4 items-center mb-6">
         <a href="#home" className="text-blue-700 font-semibold">← Back to NS Properties 4</a>
-        <button onClick={() => setPostOpen(v => !v)} className="rounded-xl bg-blue-700 px-5 py-3 text-white font-bold">Post a Property — FREE</button>
+
       </div>
       <section className="rounded-2xl bg-slate-900 text-white p-7 md:p-12 mb-8">
         <p className="text-emerald-300 text-sm font-bold mb-2">100% FREE PROPERTY MARKETPLACE</p>
