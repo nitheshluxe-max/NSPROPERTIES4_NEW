@@ -20,6 +20,53 @@ export function FreeMarketplace() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [postOpen, setPostOpen] = useState(false);
+  const [account, setAccount] = useState<{ id: string; email?: string } | null>(null);
+  const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authMessage, setAuthMessage] = useState('');
+  useEffect(() => {
+    let active = true;
+    const update = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (active) setAccount(user && !user.is_anonymous && user.email ? { id: user.id, email: user.email } : null);
+    };
+    void update();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => { void update(); });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, []);
+  async function submitAccount(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (authBusy) return;
+    const fields = new FormData(event.currentTarget);
+    const email = String(fields.get('email') || '').trim().toLowerCase();
+    const password = String(fields.get('password') || '');
+    setAuthBusy(true); setAuthMessage('');
+    try {
+      if (authMode === 'signup') {
+        const phone = String(fields.get('phone') || '').trim();
+        if (!/^\\+?[0-9]{10,15}$/.test(phone)) throw new Error('Enter a valid phone number (10–15 digits).');
+        if (password.length < 8) throw new Error('Password must be at least 8 characters.');
+        const { data, error } = await supabase.auth.signUp({
+          email, password, options: { data: { contact_phone: phone },
+            emailRedirectTo: window.location.origin + window.location.pathname + '#free-marketplace' }
+        });
+        if (error) throw error;
+        if (!data.session) setAuthMessage('Account created. Confirm your email using the link sent to your inbox, then sign in to post.');
+        else setAuthMessage('Account created. You can now post a property.');
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        setAuthMessage('Signed in. You can now post a property.');
+      }
+    } catch (error) {
+      setAuthMessage(error instanceof Error ? error.message : 'Authentication failed.');
+    } finally { setAuthBusy(false); }
+  }
+  async function signOutMarketplace() {
+    const { error } = await supabase.auth.signOut();
+    if (error) setAuthMessage(error.message);
+    else { setAccount(null); setAuthMessage('Signed out.'); }
+  }
   const [refresh, setRefresh] = useState(0);
   const [photos, setPhotos] = useState<File[]>([]);
   const [brochure, setBrochure] = useState<File | null>(null);
@@ -75,17 +122,10 @@ export function FreeMarketplace() {
     setBusy(true);
     const form = event.currentTarget;
     const fields = new FormData(form);
-    // Create a limited Supabase anonymous session for guests. RLS still requires
-    // the listing to belong to auth.uid() and to remain pending until admin approval.
-    let { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      const anonymous = await supabase.auth.signInAnonymously();
-      user = anonymous.data.user;
-      authError = anonymous.error;
-    }
-    if (authError || !user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user || user.is_anonymous || !user.email) {
       setBusy(false);
-      setMessage('Guest posting is unavailable. Ask the site administrator to enable Anonymous Sign-Ins in Supabase Authentication. ' + (authError?.message || ''));
+      setMessage('Create an account or sign in with email and password before posting.');
       return;
     }
     const contact = String(fields.get('contact_phone') || '').trim();
@@ -144,8 +184,25 @@ export function FreeMarketplace() {
       {message && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-5 text-sm">{message}</p>}
       {postOpen && <section className="rounded-2xl bg-white border border-slate-200 p-6 mb-8">
         <h2 className="text-2xl font-bold mb-2">List your property free</h2>
-        <p className="text-sm text-slate-600 mb-4">No email login required. Your listing will be reviewed by an administrator before it appears publicly. Contact details are public only with your consent.</p>
-        <form onSubmit={submitProperty} className="grid sm:grid-cols-2 gap-3">
+        <p className="text-sm text-slate-600 mb-4">Sign up or sign in before posting. Your listing will appear publicly only after admin approval.</p>
+        {!account ? <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-5">
+          <div className="flex gap-2 mb-4">
+            <button type="button" onClick={() => { setAuthMode('signup'); setAuthMessage(''); }} className={authMode === 'signup' ? 'bg-blue-700 text-white px-4 py-2 rounded-lg' : 'bg-white border px-4 py-2 rounded-lg'}>Create account</button>
+            <button type="button" onClick={() => { setAuthMode('signin'); setAuthMessage(''); }} className={authMode === 'signin' ? 'bg-blue-700 text-white px-4 py-2 rounded-lg' : 'bg-white border px-4 py-2 rounded-lg'}>Sign in</button>
+          </div>
+          <form onSubmit={submitAccount} className="grid sm:grid-cols-2 gap-3">
+            <label className="text-sm">Email address<input required name="email" type="email" autoComplete="email" className={inputClass + ' mt-1'}/></label>
+            {authMode === 'signup' && <label className="text-sm">Phone number (no SMS verification)<input required name="phone" type="tel" inputMode="tel" pattern="\\+?[0-9]{10,15}" placeholder="9876543210" className={inputClass + ' mt-1'}/></label>}
+            <label className="text-sm">Password<input required name="password" type="password" autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'} minLength={authMode === 'signup' ? 8 : undefined} className={inputClass + ' mt-1'}/></label>
+            <button disabled={authBusy} className="sm:col-span-2 bg-blue-700 text-white rounded-lg px-5 py-3 disabled:opacity-50">{authBusy ? 'Please wait…' : authMode === 'signup' ? 'Sign up' : 'Sign in'}</button>
+          </form>
+          {authMessage && <p role="status" className="mt-3 text-sm text-slate-800">{authMessage}</p>}
+          <p className="mt-2 text-xs text-slate-600">Phone number is stored as account profile metadata and is not SMS-verified. Email confirmation may be required depending on Supabase settings.</p>
+        </div> : <div className="flex flex-wrap items-center gap-3 rounded-lg bg-emerald-50 border border-emerald-200 p-3 mb-5 text-sm">
+          <span>Signed in as <strong>{account.email}</strong></span>
+          <button type="button" onClick={() => void signOutMarketplace()} className="text-blue-700 underline">Sign out</button>
+        </div>}
+        {account && <form onSubmit={submitProperty} className="grid sm:grid-cols-2 gap-3">
           <input name="title" required minLength={5} maxLength={120} placeholder="Property title" className={inputClass + ' sm:col-span-2'}/>
           <input name="city" required placeholder="City" className={inputClass}/>
           <input name="locality" required placeholder="Locality" className={inputClass}/>
@@ -163,7 +220,7 @@ export function FreeMarketplace() {
           </label>
           <label className="sm:col-span-2 flex gap-2 items-center text-sm"><input name="publish_contact" type="checkbox"/> I consent to publicly displaying my contact phone number</label>
           <button disabled={busy} className="sm:col-span-2 bg-blue-700 text-white rounded-lg px-5 py-3 font-bold">Submit for review — FREE</button>
-        </form>
+        </form>}
       </section>}
       {brochureError && <p role="alert" className="text-red-700 mb-4">{brochureError}</p>}
       <h2 className="text-2xl font-bold mb-4">Available properties {busy ? '· Loading…' : '(' + visible.length + ')'}</h2>
