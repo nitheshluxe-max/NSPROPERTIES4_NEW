@@ -187,7 +187,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
           <a href="#free-marketplace" className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100">Free Marketplace</a>
             {/* Primary Action CTA: Post Property FREE (0% Brokerage) */}
             <button
-              onClick={() => setIsPostModalOpen(true)}
+              onClick={() => { window.location.hash = "#post-property"; }}
               className="px-3.5 sm:px-4 py-2 min-h-[40px] text-xs font-black text-white bg-blue-600 hover:bg-blue-700 active:scale-98 rounded-xl shadow-xs transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer ring-2 ring-blue-500/20"
             >
               <PlusCircle className="w-4 h-4" />
