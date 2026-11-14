@@ -14,7 +14,6 @@ import { FilterBar } from './components/FilterBar';
 import { PropertyCard } from './components/PropertyCard';
 import { PropertyMap } from './components/PropertyMap';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
-import { PostPropertyModal } from './components/PostPropertyModal';
 import { ContactModal } from './components/ContactModal';
 import { CompareDrawer } from './components/CompareDrawer';
 import { AdminConsole } from './components/AdminConsole';
@@ -57,7 +56,6 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
     filters,
     resetFilters,
     comparisonList,
-    setIsPostModalOpen,
     isAdminAuthenticated
   } = useProperty();
 
@@ -664,17 +662,6 @@ const PropertyDetailModalWrapper: React.FC = () => {
     <PropertyDetailModal
       property={selectedProperty}
       onClose={() => setSelectedProperty(null)}
-    />
-  );
-};
-
-// Wrapper for PostPropertyModal
-const PostPropertyModalWrapper: React.FC = () => {
-  const { isPostModalOpen, setIsPostModalOpen } = useProperty();
-  return (
-    <PostPropertyModal
-      isOpen={isPostModalOpen}
-      onClose={() => setIsPostModalOpen(false)}
     />
   );
 };
