@@ -54,7 +54,7 @@ export const AdminLoginModal: React.FC = () => {
       <input id="admin-password" type="password" required autoComplete="current-password" placeholder="Admin password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border border-slate-300 rounded-lg p-3 text-slate-900" />
       <button type="submit" disabled={busy} className="w-full bg-blue-700 text-white rounded-lg p-3 disabled:opacity-50">{busy ? 'Signing in…' : 'Sign in to admin console'}</button>
       {message && <p role="alert" className="text-sm text-rose-700">{message}</p>}
-      <p className="text-xs text-slate-500">If you have only used email links before, set a password for your account in Supabase Authentication before signing in.</p>
+      <button type="button" className="text-sm text-blue-700 underline" onClick={() => { setIsAdminLoginModalOpen(false); window.location.hash = "#forgot-password"; }}>Forgot password? Set or reset your password</button>
     </form>
   </div>;
 };

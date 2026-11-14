@@ -18,6 +18,7 @@ import { PostPropertyModal } from './components/PostPropertyModal';
 import { ContactModal } from './components/ContactModal';
 import { CompareDrawer } from './components/CompareDrawer';
 import { AdminConsole } from './components/AdminConsole';
+import { PasswordRecovery } from './components/PasswordRecovery';
 import { AdminPreview } from './components/AdminPreview';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { Property } from './types/property';
@@ -609,6 +610,14 @@ const MainApp: React.FC = () => {
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(() => window.location.hash === '#free-marketplace');
   useEffect(() => { const update = () => setMarketplaceOpen(window.location.hash === '#free-marketplace'); window.addEventListener('hashchange', update); return () => window.removeEventListener('hashchange', update); }, []);
+  const [recoveryOpen, setRecoveryOpen] = useState(() => window.location.hash === '#forgot-password' || new URLSearchParams(window.location.search).get('auth') === 'recovery');
+  useEffect(() => {
+    const sync = () => setRecoveryOpen(window.location.hash === '#forgot-password' || new URLSearchParams(window.location.search).get('auth') === 'recovery');
+    window.addEventListener('hashchange', sync);
+    window.addEventListener('popstate', sync);
+    return () => { window.removeEventListener('hashchange', sync); window.removeEventListener('popstate', sync); };
+  }, []);
+  if (recoveryOpen) return <PasswordRecovery onClose={() => { window.history.replaceState({}, '', window.location.pathname + '#admin'); setRecoveryOpen(false); }} />;
   if (marketplaceOpen) return <FreeMarketplace />;
 
   // Directly render the isolated Admin Console if #admin is open
