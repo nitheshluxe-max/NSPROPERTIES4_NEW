@@ -19,7 +19,7 @@ export function MarketplaceModeration() {
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [media, setMedia] = useState<Record<string, { photos: string[]; brochurePath?: string }>>({});
+  const [media, setMedia] = useState<Record<string, { photos: string[]; brochurePath?: string; documents: { path: string; name: string; type: string }[] }>>({});
   async function viewBrochure(path: string) {
     const { data, error } = await supabase.storage.from('property-brochures').createSignedUrl(path, 60);
     if (error || !data?.signedUrl) { setError(error?.message || 'Unable to open brochure.'); return; }
@@ -35,16 +35,18 @@ export function MarketplaceModeration() {
       setProperties(entries);
       if (entries.length) {
         const ids = entries.map(item => item.id);
-        const [photos, brochures] = await Promise.all([
+        const [photos, brochures, documents] = await Promise.all([
           supabase.from('property_photos').select('property_id,storage_path,sort_order').in('property_id', ids).order('sort_order'),
-          supabase.from('property_brochures').select('property_id,storage_path').in('property_id', ids)
+          supabase.from('property_brochures').select('property_id,storage_path').in('property_id', ids),
+          supabase.from('property_documents').select('property_id,storage_path,file_name,document_type').in('property_id', ids)
         ]);
-        if (photos.error || brochures.error) throw photos.error || brochures.error;
-        const next: Record<string, { photos: string[]; brochurePath?: string }> = {};
+        if (photos.error || brochures.error || documents.error) throw photos.error || brochures.error || documents.error;
+        const next: Record<string, { photos: string[]; brochurePath?: string; documents: { path: string; name: string; type: string }[] }> = {};
         entries.forEach(item => {
           next[item.id] = {
             photos: (photos.data || []).filter(p => p.property_id === item.id).map(p => supabase.storage.from('property-photos').getPublicUrl(p.storage_path).data.publicUrl),
-            brochurePath: brochures.data?.find(b => b.property_id === item.id)?.storage_path
+            brochurePath: brochures.data?.find(b => b.property_id === item.id)?.storage_path,
+            documents: (documents.data || []).filter(d => d.property_id === item.id).map(d => ({path:d.storage_path,name:d.file_name,type:d.document_type}))
           };
         });
         setMedia(next);
@@ -113,6 +115,7 @@ export function MarketplaceModeration() {
             </div>
             <div className="flex flex-wrap gap-2 items-center">
               {media[item.id]?.photos.map(url => <img key={url} src={url} alt={item.title + ' photo'} loading="lazy" className="h-16 w-20 object-cover rounded-lg" />)}
+              {media[item.id]?.documents.map(doc => <button key={doc.path} type="button" className="px-3 py-2 rounded-lg border border-blue-300 text-blue-800 text-sm" onClick={() => void viewBrochure(doc.path)}>View {doc.type === 'floor-plan' ? 'floor plan' : 'brochure'} (PDF)</button>)}
               {media[item.id]?.brochurePath && <button type="button" className="px-3 py-2 rounded-lg border border-blue-300 text-blue-800 text-sm" onClick={() => void viewBrochure(media[item.id].brochurePath!)}>View brochure</button>}
               {item.status !== 'approved' && <button type="button" disabled={!!workingId}
                 onClick={() => void changeStatus(item, 'approved')}
