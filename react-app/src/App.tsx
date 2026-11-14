@@ -18,6 +18,7 @@ import { PostPropertyModal } from './components/PostPropertyModal';
 import { ContactModal } from './components/ContactModal';
 import { CompareDrawer } from './components/CompareDrawer';
 import { AdminConsole } from './components/AdminConsole';
+import { AdminPreview } from './components/AdminPreview';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { Property } from './types/property';
 import {
@@ -618,6 +619,10 @@ const MainApp: React.FC = () => {
         <PropertyDetailModalWrapper />
       </div>
     );
+  }
+
+  if (currentView === 'admin' && !isAdminAuthenticated) {
+    return <><AdminPreview onSignIn={() => setIsAdminLoginModalOpen(true)} /><AdminLoginModal /></>;
   }
 
   return (
