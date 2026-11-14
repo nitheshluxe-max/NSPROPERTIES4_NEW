@@ -20,7 +20,6 @@ export function FreeMarketplace() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [postOpen, setPostOpen] = useState(false);
-  const [email, setEmail] = useState('');
   const [refresh, setRefresh] = useState(0);
   const [photos, setPhotos] = useState<File[]>([]);
   const [brochure, setBrochure] = useState<File | null>(null);
@@ -71,25 +70,22 @@ export function FreeMarketplace() {
   }, [purpose, type, refresh]);
   const visible = items.filter(p => [p.title, p.city, p.locality].some(s => s.toLowerCase().includes(query.toLowerCase().trim())));
 
-  async function sendLoginLink(event: React.FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: window.location.origin + window.location.pathname + '#free-marketplace' }
-    });
-    setBusy(false);
-    setMessage(error ? error.message : 'Check your email for the sign-in link, then return to post your property.');
-  }
   async function submitProperty(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     const form = event.currentTarget;
     const fields = new FormData(form);
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Create a limited Supabase anonymous session for guests. RLS still requires
+    // the listing to belong to auth.uid() and to remain pending until admin approval.
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      const anonymous = await supabase.auth.signInAnonymously();
+      user = anonymous.data.user;
+      authError = anonymous.error;
+    }
     if (authError || !user) {
       setBusy(false);
-      setMessage('Please sign in with your email before posting.');
+      setMessage('Guest posting is unavailable. Ask the site administrator to enable Anonymous Sign-Ins in Supabase Authentication. ' + (authError?.message || ''));
       return;
     }
     const contact = String(fields.get('contact_phone') || '').trim();
@@ -148,8 +144,7 @@ export function FreeMarketplace() {
       {message && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-5 text-sm">{message}</p>}
       {postOpen && <section className="rounded-2xl bg-white border border-slate-200 p-6 mb-8">
         <h2 className="text-2xl font-bold mb-2">List your property free</h2>
-        <p className="text-sm text-slate-600 mb-4">Email sign-in is required to prevent spam. Contact details are public only with your consent.</p>
-        <form onSubmit={sendLoginLink} className="flex flex-wrap gap-2 mb-5"><input type="email" required aria-label="Your email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email for sign-in link" className={inputClass + ' sm:max-w-sm'}/><button disabled={busy} className="bg-slate-800 text-white rounded-lg px-4 py-2">Send sign-in link</button></form>
+        <p className="text-sm text-slate-600 mb-4">No email login required. Your listing will be reviewed by an administrator before it appears publicly. Contact details are public only with your consent.</p>
         <form onSubmit={submitProperty} className="grid sm:grid-cols-2 gap-3">
           <input name="title" required minLength={5} maxLength={120} placeholder="Property title" className={inputClass + ' sm:col-span-2'}/>
           <input name="city" required placeholder="City" className={inputClass}/>
