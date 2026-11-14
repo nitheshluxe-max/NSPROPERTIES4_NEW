@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import {
   ArrowRight, BedDouble, Building2, BriefcaseBusiness, CheckCircle2, Heart,
-  Home, KeyRound, LandPlot, MapPin, MessageSquare, PlusCircle, ShieldCheck,
+  Home, KeyRound, LandPlot, MapPin, PlusCircle, ShieldCheck,
   Sparkles, UserCheck, Users, Eye
 } from 'lucide-react';
 import { useProperty } from '../context/PropertyContext';
@@ -53,6 +53,10 @@ export function ReferenceHomepageTop({ onFocusPropertyOnMap }: { onFocusProperty
   const featured = useMemo(() => [...approved.filter(p => p.featured), ...approved.filter(p => !p.featured)].slice(0, 6), [approved]);
 
   function selectOffering(item: Offering) {
+    if (item.title === 'New Projects') {
+      document.getElementById('new-projects-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     setFilters({ listingType: item.listingType, propertyType: item.propertyType, zeroBrokerageOnly: !!item.zeroBrokerageOnly,
       searchQuery: '', locality: '', city: 'all' });
     scrollToExplorer();
