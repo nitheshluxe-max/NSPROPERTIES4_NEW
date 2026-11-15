@@ -388,7 +388,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
 
       {/* MOBILE FULL-SCREEN MAP VIEW MODAL (When Mobile Map View is active) */}
       {mobileViewMode === 'map' && (
-        <div className="fixed inset-0 z-50 bg-slate-900 lg:hidden flex flex-col">
+        <div className="fixed inset-0 z-[80] bg-slate-900 lg:hidden flex flex-col min-h-0">
           {/* Mobile Map Top Bar */}
           <div className="bg-white px-3 py-2.5 border-b border-slate-200 flex items-center justify-between gap-2 shrink-0 shadow-sm">
             <button
@@ -407,7 +407,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
           </div>
 
           {/* Full Screen Mobile Map Container */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-h-0 overflow-hidden">
             <PropertyMap
               properties={filteredProperties}
               onSelectProperty={(p) => setSelectedProperty(p)}
