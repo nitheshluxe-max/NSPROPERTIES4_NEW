@@ -49,7 +49,7 @@ export async function requestEmailLogin(email: string, redirectUrl: string) {
   if (error) throw error;
 }
 
-export async function createProperty(input: Omit<MarketplaceProperty, 'id' | 'status' | 'created_at'>) {
+export async function createProperty(input: Omit<MarketplaceProperty, 'id' | 'status' | 'created_at' | 'latitude' | 'longitude' | 'bedrooms' | 'bathrooms' | 'balconies' | 'featured' | 'verified'>) {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) throw new Error('Please sign in to post a property.');
   const { data, error } = await supabase.from('properties')
