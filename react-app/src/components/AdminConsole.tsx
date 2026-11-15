@@ -204,6 +204,16 @@ const AdminConsoleContent: React.FC = () => {
   const safeVisitorStats: VisitorStats = liveStats;
 
   // Errors are shown rather than falling back to fabricated CRM data.
+  const saveInquiryStatus = async (id: string, status: PropertyInquiry['status']) => {
+    try {
+      await updateInquiryStatus(id, status);
+      setLiveInquiries(prev => prev.map(i => i.id === id ? {...i, status} : i));
+      showToast('Inquiry status saved to Supabase.');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to save inquiry status');
+    }
+  };
+
   // Metrics computation
   const totalListings = safeProperties.length;
   const approvedListings = safeProperties.filter(p => p && p.status === 'approved').length;
@@ -788,7 +798,7 @@ const AdminConsoleContent: React.FC = () => {
                             <div className="flex items-center gap-1.5">
                               <select
                                 value={inq.status || 'new'}
-                                onChange={(e) => updateInquiryStatus(inq.id, e.target.value as any)}
+                                onChange={(e) => void saveInquiryStatus(inq.id, e.target.value as PropertyInquiry['status'])}
                                 className="px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs font-semibold cursor-pointer"
                               >
                                 <option value="new">New Lead</option>
