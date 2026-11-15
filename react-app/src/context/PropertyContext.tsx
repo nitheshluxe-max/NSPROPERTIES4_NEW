@@ -803,6 +803,32 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  // Record an anonymous browser session in Supabase (no IP, geolocation or user identity).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storageKey = 'nsp4_supabase_session_id';
+    let sessionId = sessionStorage.getItem(storageKey);
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      sessionStorage.setItem(storageKey, sessionId);
+    }
+    const id = sessionId;
+    const record = async () => {
+      if (document.visibilityState !== 'visible') return;
+      const { error } = await supabase.rpc('record_site_session', {
+        session_id: id, device_type: getDeviceType()
+      });
+      if (error) console.warn('Supabase session analytics unavailable:', error.message);
+    };
+    void record();
+    const interval = window.setInterval(() => void record(), 30000);
+    document.addEventListener('visibilitychange', record);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', record);
+    };
+  }, []);
+
   // Real-time Active Presence Heartbeat for this session
   useEffect(() => {
     if (typeof window === 'undefined') return;

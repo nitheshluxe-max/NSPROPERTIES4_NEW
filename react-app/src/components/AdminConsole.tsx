@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import type { UserProfile } from '../types/property';
 import { MarketplaceModeration } from './MarketplaceModeration';
 import { useProperty, COMPANY_NAME, COMPANY_PHONE, COMPANY_PHONE_DISPLAY, COMPANY_LOGO } from '../context/PropertyContext';
 import { Property, ListingStatus, PropertyInquiry, VisitorStats } from '../types/property';
@@ -119,14 +121,9 @@ const AdminConsoleContent: React.FC = () => {
     updatePropertyStatus,
     toggleFeaturedProperty,
     deleteProperty,
-    inquiries,
     updateInquiryStatus,
-    users,
-    resetToDemoData,
     setSelectedProperty,
     logoutAdmin,
-    visitorStats,
-    resetVisitorStats
   } = useProperty();
 
   const [activeTab, setActiveTab] = useState<'listings' | 'leads' | 'visitors' | 'users' | 'analytics'>('listings');
@@ -143,17 +140,78 @@ const AdminConsoleContent: React.FC = () => {
     setTimeout(() => setActionToast(null), 4000);
   };
 
+  // Admin data is loaded from Supabase, never localStorage, Firestore, or demo seeds.
+  const [liveInquiries, setLiveInquiries] = useState<PropertyInquiry[]>([]);
+  const [liveUsers, setLiveUsers] = useState<UserProfile[]>([]);
+  const [liveStats, setLiveStats] = useState<VisitorStats>({
+    totalVisitors: 0, todayVisitors: 0, activeNow: 0, cityBreakdown: {},
+    deviceBreakdown: {mobile: 0, desktop: 0, tablet: 0}
+  });
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [liveLoading, setLiveLoading] = useState(true);
+  useEffect(() => {
+    let mounted = true;
+    const refresh = async () => {
+      const [leads, directory, analytics] = await Promise.all([
+        supabase.rpc('admin_list_inquiries'),
+        supabase.rpc('admin_user_directory'),
+        supabase.rpc('admin_site_analytics')
+      ]);
+      if (!mounted) return;
+      const errors = [leads.error, directory.error, analytics.error].filter(Boolean);
+      setLiveError(errors.length ? errors.map(e => e?.message).join(' | ') : null);
+      if (!leads.error) {
+        setLiveInquiries((leads.data || []).map((i: any) => ({
+          id: i.id, propertyId: i.property_id,
+          propertyTitle: properties.find(p => p.id === i.property_id)?.title || 'Property Inquiry',
+          propertyPriceDisplay: '', propertyCity: '',
+          userName: i.user_name, userPhone: i.user_phone, userEmail: i.user_email || '',
+          inquiryType: i.inquiry_type, scheduledDate: i.scheduled_date || undefined,
+          message: i.message || '', status: i.status, createdAt: i.created_at
+        })));
+      }
+      if (!directory.error) setLiveUsers((directory.data || []).map((u: any) => ({
+        id: u.id, name: u.name, email: u.email, phone: u.phone,
+        role: u.role, city: u.city, verified: u.verified,
+        listingsCount: Number(u.listings_count), joinedDate: u.joined_date
+      })));
+      if (!analytics.error && analytics.data) {
+        const d = analytics.data as any;
+        setLiveStats({
+          totalVisitors: Number(d.totalVisitors || 0),
+          todayVisitors: Number(d.todayVisitors || 0),
+          activeNow: Number(d.activeNow || 0),
+          cityBreakdown: {},
+          deviceBreakdown: {
+            mobile: Number(d.deviceBreakdown?.mobile || 0),
+            desktop: Number(d.deviceBreakdown?.desktop || 0),
+            tablet: Number(d.deviceBreakdown?.tablet || 0)
+          }
+        });
+      }
+      setLiveLoading(false);
+    };
+    void refresh();
+    const interval = window.setInterval(() => void refresh(), 30000);
+    return () => { mounted = false; window.clearInterval(interval); };
+  }, []);
+
   // Defensive array safeguards
   const safeProperties = Array.isArray(properties) ? properties : [];
-  const safeInquiries = Array.isArray(inquiries) ? inquiries : [];
-  const safeUsers = Array.isArray(users) ? users : [];
+  const safeInquiries = liveInquiries;
+  const safeUsers = liveUsers;
 
-  const safeVisitorStats: VisitorStats = visitorStats || {
-    totalVisitors: 1,
-    todayVisitors: 1,
-    activeNow: 1,
-    cityBreakdown: { 'Bengaluru': 1 },
-    deviceBreakdown: { mobile: 0, desktop: 100, tablet: 0 }
+  const safeVisitorStats: VisitorStats = liveStats;
+
+  // Errors are shown rather than falling back to fabricated CRM data.
+  const saveInquiryStatus = async (id: string, status: PropertyInquiry['status']) => {
+    try {
+      await updateInquiryStatus(id, status);
+      setLiveInquiries(prev => prev.map(i => i.id === id ? {...i, status} : i));
+      showToast('Inquiry status saved to Supabase.');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to save inquiry status');
+    }
   };
 
   // Metrics computation
@@ -255,12 +313,12 @@ const AdminConsoleContent: React.FC = () => {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <button
-              onClick={resetToDemoData}
+              onClick={() => showToast('Demo seed reset disabled: dashboard uses live Supabase records.')}
               className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-700"
               title="Reset properties and leads to default seed set"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Reset Demo Seed</span>
+              <span className="hidden sm:inline">Demo Seed Disabled</span>
             </button>
 
             {/* View live public portal button */}
@@ -286,6 +344,8 @@ const AdminConsoleContent: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        {liveLoading && <div role="status" className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">Loading CRM, registered users and visitor sessions from Supabase…</div>}
+        {liveError && <div role="alert" className="mb-4 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800">Live admin data unavailable: {liveError}. Apply phase10_live_admin_crm.sql and confirm your Supabase admin login.</div>}
         {/* Executive Overview KPI Metric Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           {/* VISITOR COUNT KPI CARD */}
@@ -293,16 +353,16 @@ const AdminConsoleContent: React.FC = () => {
             <div className="flex items-center justify-between text-blue-200 text-xs font-semibold mb-1">
               <span className="flex items-center gap-1">
                 <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                Live Visitors
+                Recorded Sessions
               </span>
               <Globe2 className="w-4 h-4 text-blue-300" />
             </div>
             <span className="text-2xl font-black text-white font-mono tabular-nums">
-              {(safeVisitorStats.totalVisitors ?? 1).toLocaleString('en-IN')}
+              {(safeVisitorStats.totalVisitors ?? 0).toLocaleString('en-IN')}
             </span>
             <div className="text-[11px] text-blue-200 mt-1 flex items-center justify-between">
-              <span>Today: +{safeVisitorStats.todayVisitors ?? 1}</span>
-              <span className="text-emerald-300 font-bold">{safeVisitorStats.activeNow ?? 1} online</span>
+              <span>Today (UTC): {safeVisitorStats.todayVisitors ?? 0}</span>
+              <span className="text-emerald-300 font-bold">{safeVisitorStats.activeNow ?? 0} active sessions</span>
             </div>
           </div>
 
@@ -740,7 +800,7 @@ const AdminConsoleContent: React.FC = () => {
                             <div className="flex items-center gap-1.5">
                               <select
                                 value={inq.status || 'new'}
-                                onChange={(e) => updateInquiryStatus(inq.id, e.target.value as any)}
+                                onChange={(e) => void saveInquiryStatus(inq.id, e.target.value as PropertyInquiry['status'])}
                                 className="px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs font-semibold cursor-pointer"
                               >
                                 <option value="new">New Lead</option>
@@ -781,7 +841,7 @@ const AdminConsoleContent: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 3: EXACT REAL-TIME LIVE VISITOR ANALYTICS */}
+        {/* TAB 3: RECORDED SESSION ANALYTICS */}
         {activeTab === 'visitors' && (
           <div className="space-y-6">
             {/* Live Engine Header & Reset Controls Bar */}
@@ -792,47 +852,42 @@ const AdminConsoleContent: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm font-bold text-slate-900">Exact & Live Visitor Analytics</h3>
+                    <h3 className="text-sm font-bold text-slate-900">Recorded Visitor Sessions</h3>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                       Live Heartbeat Connected
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500">Real-time session presence tracking. All synthetic demo numbers have been purged.</p>
+                  <p className="text-xs text-slate-500">Counts reflect recorded browser sessions, not unique people. Updated every 30 seconds (UTC day).</p>
                 </div>
               </div>
 
               {/* Reset Visitor Stats Action Button */}
               <button
                 type="button"
-                onClick={async () => {
-                  if (window.confirm('Reset visitor statistics and purge any old cached numbers back to real live count (1)?')) {
-                    await resetVisitorStats();
-                    showToast('Visitor statistics reset to exact live count (1).');
-                  }
-                }}
+                onClick={() => showToast('Live session metrics are read-only and cannot be reset here.')}
                 className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                title="Reset total and today visitors to 1 and sync clean state"
+                title="Visitor counts come from Supabase and cannot be reset here"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset Demo Stats to Exact Live (1)</span>
+                <span>Live Sessions (Read Only)</span>
               </button>
             </div>
 
             {/* Top Cards for Visitors */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs">
-                <span className="text-xs font-semibold text-slate-500 block mb-1">Lifetime Unique Visitors</span>
+                <span className="text-xs font-semibold text-slate-500 block mb-1">Recorded Browser Sessions</span>
                 <span className="text-3xl font-black text-blue-700 font-mono tabular-nums block">
                   {(safeVisitorStats.totalVisitors ?? 1).toLocaleString('en-IN')}
                 </span>
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  Exact visitor sessions recorded in database
+                  Browser sessions recorded in Supabase
                 </span>
               </div>
 
               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs">
-                <span className="text-xs font-semibold text-slate-500 block mb-1">Visitors Today</span>
+                <span className="text-xs font-semibold text-slate-500 block mb-1">Sessions Today (UTC)</span>
                 <span className="text-3xl font-black text-slate-900 font-mono tabular-nums block">
                   {(safeVisitorStats.todayVisitors ?? 1).toLocaleString('en-IN')}
                 </span>
@@ -858,8 +913,8 @@ const AdminConsoleContent: React.FC = () => {
             {/* City & Device traffic Breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-2xs">
-                <h3 className="text-base font-bold text-slate-900 mb-1">Live Visitor Geographies</h3>
-                <p className="text-xs text-slate-400 mb-4">Origins of active users currently browsing portal listings</p>
+                <h3 className="text-base font-bold text-slate-900 mb-1">Visitor Geographies Unavailable</h3>
+                <p className="text-xs text-slate-400 mb-4">No location tracking is collected; city cannot be inferred from property filters.</p>
                 <div className="space-y-3">
                   {Object.entries(safeVisitorStats.cityBreakdown || {}).map(([cName, count]) => {
                     const total = safeVisitorStats.totalVisitors || 1;
@@ -887,7 +942,7 @@ const AdminConsoleContent: React.FC = () => {
 
               <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-2xs">
                 <h3 className="text-base font-bold text-slate-900 mb-1">Real Session Device Split</h3>
-                <p className="text-xs text-slate-400 mb-4">Calculated dynamically from live active visitor user-agents</p>
+                <p className="text-xs text-slate-400 mb-4">Device split of active recorded sessions</p>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <div className="flex items-center gap-3">
@@ -932,7 +987,7 @@ const AdminConsoleContent: React.FC = () => {
           <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
             <div className="p-4 border-b border-slate-200">
               <h3 className="text-sm font-bold text-slate-900">User & Partner Directory</h3>
-              <p className="text-xs text-slate-500">Registered owners, certified broker agents, and builders</p>
+              <p className="text-xs text-slate-500">Registered Supabase accounts; roles are self-declared unless separately verified</p>
             </div>
 
             <div className="overflow-x-auto">
@@ -944,7 +999,7 @@ const AdminConsoleContent: React.FC = () => {
                     <th className="py-3 px-4">Contact Info</th>
                     <th className="py-3 px-4">Base City</th>
                     <th className="py-3 px-4">Properties Posted</th>
-                    <th className="py-3 px-4">Verification</th>
+                    <th className="py-3 px-4">Account Confirmation</th>
                     <th className="py-3 px-4">Member Since</th>
                   </tr>
                 </thead>
@@ -989,10 +1044,10 @@ const AdminConsoleContent: React.FC = () => {
                           {u.verified ? (
                             <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
                               <ShieldCheck className="w-3.5 h-3.5" />
-                              Verified
+                              Confirmed
                             </span>
                           ) : (
-                            <span className="text-slate-400">Unverified</span>
+                            <span className="text-slate-400">Not confirmed</span>
                           )}
                         </td>
 
