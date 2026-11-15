@@ -128,8 +128,8 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({properties,onSelectProp
     </div>
     <div className="absolute top-3 right-3 z-[500] flex items-center gap-1.5">
       <button type="button" onClick={()=>void locate()} disabled={isLocatingUser} title="Locate me" className="p-2.5 bg-white rounded-xl shadow-md border border-slate-200">{isLocatingUser?<Loader2 className="w-4 h-4 animate-spin"/>:<LocateFixed className="w-4 h-4"/>}</button>
-      <button type="button" onClick={toggleFullscreen} title={effectiveFullscreen?'Close fullscreen':'Fullscreen map'} className="p-2.5 bg-white rounded-xl shadow-md border border-slate-200">{effectiveFullscreen?<Minimize2 className="w-4 h-4"/>:<Maximize2 className="w-4 h-4"/>}</button>
-      {effectiveFullscreen&&<button type="button" onClick={toggleFullscreen} className="p-2.5 bg-white rounded-xl shadow-md border border-slate-200"><X className="w-4 h-4"/></button>}
+      {!isFullScreenMode&&<button type="button" onClick={toggleFullscreen} title={effectiveFullscreen?'Close fullscreen':'Fullscreen map'} className="p-2.5 bg-white rounded-xl shadow-md border border-slate-200">{effectiveFullscreen?<Minimize2 className="w-4 h-4"/>:<Maximize2 className="w-4 h-4"/>}</button>}
+      {!isFullScreenMode&&effectiveFullscreen&&<button type="button" onClick={toggleFullscreen} className="p-2.5 bg-white rounded-xl shadow-md border border-slate-200"><X className="w-4 h-4"/></button>}
     </div>
     <div className="absolute right-3 bottom-14 z-[500] flex flex-col gap-1">
       <button type="button" aria-label="Zoom in" onClick={()=>mapRef.current?.zoomIn()} className="p-2.5 bg-white rounded-xl shadow-md border border-slate-200"><ZoomIn className="w-4 h-4"/></button>
