@@ -49,17 +49,17 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-3 md:gap-6 h-16 sm:h-18">
+      <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-6 2xl:px-8">
+        <div className="flex items-center justify-between gap-2 lg:gap-3 h-16 lg:h-[72px] min-w-0">
           {/* Zone 1: Brand Wordmark & City Selector */}
-          <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+          <div className="flex items-center gap-2 lg:gap-3 min-w-0 shrink">
             <button
               onClick={() => {
                 setFilters({ propertyType: 'all', listingType: 'all', city: 'all', searchQuery: '', zeroBrokerageOnly: false });
               }}
-              className="flex items-center gap-2.5 sm:gap-3 group text-left cursor-pointer"
+              className="flex items-center gap-2 lg:gap-3 group text-left cursor-pointer min-w-0"
             >
-              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-xs border border-slate-200 shrink-0 bg-slate-950 group-hover:scale-105 transition-transform flex items-center justify-center">
+              <div className="w-9 h-9 lg:w-11 lg:h-11 rounded-xl overflow-hidden shadow-xs border border-slate-200 shrink-0 bg-slate-950 group-hover:scale-105 transition-transform flex items-center justify-center">
                 <img
                   src={COMPANY_LOGO}
                   alt={COMPANY_NAME}
@@ -68,7 +68,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
               </div>
 
               <div className="flex flex-col">
-                <span className="text-base sm:text-xl font-black tracking-tight text-slate-950 leading-none">
+                <span className="text-[13px] sm:text-base xl:text-lg font-black tracking-tight text-slate-950 leading-tight whitespace-nowrap">
                   {COMPANY_NAME}
                 </span>
 
@@ -76,7 +76,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
             </button>
 
             {/* Quick Metro City Selector (Desktop / Tablet) */}
-            <div className="hidden lg:flex items-center relative">
+            <div className="hidden 2xl:flex items-center relative">
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 rounded-lg text-xs font-semibold text-slate-700 transition-colors">
                 <MapPin className="w-3.5 h-3.5 text-blue-600" />
                 <select
@@ -95,7 +95,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
           </div>
 
           {/* Zone 2: Navigation Links (Desktop: Buy, Rent, Commercial, Plots, Zero Brokerage Owners) */}
-          <nav className="hidden md:flex items-center gap-4 lg:gap-6 text-xs lg:text-sm font-semibold text-slate-600">
+          <nav className="hidden xl:flex items-center justify-center gap-3 2xl:gap-5 text-xs 2xl:text-sm font-semibold text-slate-600 min-w-0 flex-1">
             <button type="button" onClick={() => { setFilters({ listingType: 'all', propertyType: 'all', city: 'all', locality: '', searchQuery: '', zeroBrokerageOnly: false }); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="hover:text-blue-600 transition-colors whitespace-nowrap shrink-0 cursor-pointer">Home</button>
             <button
               onClick={() => handleNavType('sale', 'all', false)}
@@ -154,11 +154,11 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
           </nav>
 
           {/* Zone 3: Actions (Helpline + Compare + Post Property Free) */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
             {/* Phone Helpline */}
             <a
               href={`tel:${COMPANY_PHONE}`}
-              className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              className="hidden 2xl:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
               title="Call Helpline"
             >
               <Phone className="w-3.5 h-3.5 text-blue-600" />
@@ -169,7 +169,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
             {comparisonList.length > 0 && (
               <button
                 onClick={onOpenCompare}
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
                 title="Compare properties"
               >
                 <Scale className="w-3.5 h-3.5 text-blue-600" />
@@ -179,20 +179,20 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
 
             {/* Saved properties navigation matches reference UX. */}
             <button type="button" onClick={() => document.getElementById('saved-properties-section')?.scrollIntoView({ behavior: 'smooth' })}
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-slate-100 hover:bg-rose-50 text-slate-700">
+              className="hidden 2xl:flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-slate-100 hover:bg-rose-50 text-slate-700">
               <Heart className={`w-3.5 h-3.5 text-rose-600 ${favorites.length ? 'fill-rose-600' : ''}`}/> Saved {favorites.length > 0 ? `(${favorites.length})` : ''}
             </button>
 
-          <a href="#post-property" className="hidden xl:inline-flex items-center px-3 py-2 min-h-[40px] text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200">Login / Register</a>
-          <a href="#free-marketplace" className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100">Free Marketplace</a>
+          <a href="#post-property" className="hidden 2xl:inline-flex items-center px-3 py-2 min-h-[40px] text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200">Login / Register</a>
+          <a href="#free-marketplace" className="hidden 2xl:inline-flex items-center px-3 py-2 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100">Free Marketplace</a>
             {/* Primary Action CTA: Post Property FREE (0% Brokerage) */}
             <button
               onClick={() => { window.location.hash = "#post-property"; }}
-              className="px-3.5 sm:px-4 py-2 min-h-[40px] text-xs font-black text-white bg-blue-600 hover:bg-blue-700 active:scale-98 rounded-xl shadow-xs transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer ring-2 ring-blue-500/20"
+              className="px-2.5 sm:px-3.5 py-2 min-h-[40px] text-[11px] sm:text-xs font-black text-white bg-blue-600 hover:bg-blue-700 active:scale-98 rounded-xl shadow-xs transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer ring-2 ring-blue-500/20"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Post Property FREE</span>
-              <span className="hidden lg:inline bg-blue-800/80 text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ml-0.5">
+              <span className="hidden sm:inline">Post Property FREE</span><span className="sm:hidden">Post FREE</span>
+              <span className="hidden 2xl:inline bg-blue-800/80 text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ml-0.5">
                 0% Brokerage
               </span>
             </button>
@@ -200,7 +200,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
             {/* Mobile Hamburger Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+              className="xl:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Open mobile navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6 text-slate-700" />}
@@ -209,9 +209,9 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
         </div>
       </div>
 
-      {/* Mobile Drawer Menu (Responsive) */}
+      {/* Responsive Drawer Menu (Mobile / Tablet) */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-5 space-y-3 animate-in slide-in-from-top duration-150">
+        <div className="xl:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-5 space-y-3 animate-in slide-in-from-top duration-150">
           <div className="flex items-center gap-2 p-2.5 bg-slate-100 rounded-lg text-xs font-semibold text-slate-800">
             <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
             <span className="text-slate-500">City:</span>
@@ -276,6 +276,7 @@ export const Navbar: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
             </button>
           </div>
 
+          <div className="grid grid-cols-2 gap-2"><a href="#post-property" onClick={() => setMobileMenuOpen(false)} className="p-3 rounded-lg text-center bg-slate-100 text-slate-800 font-bold">Login / Register</a><button type="button" onClick={() => {setMobileMenuOpen(false); document.getElementById("saved-properties-section")?.scrollIntoView({behavior:"smooth"});}} className="p-3 rounded-lg text-center bg-slate-100 text-slate-800 font-bold">Saved Properties</button></div>
           <a href="#free-marketplace" onClick={() => setMobileMenuOpen(false)} className="block p-3 rounded-lg text-center bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">Free Marketplace · Post & Contact Free</a>
           <a
             href={`tel:${COMPANY_PHONE}`}
