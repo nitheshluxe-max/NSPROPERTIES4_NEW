@@ -1117,6 +1117,32 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updateProperty = async (prop: Property): Promise<void> => {
+    // UUID properties are posted through Supabase; never write them to Firestore.
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(prop.id)) {
+      const { supabase } = await import('../lib/supabase');
+      const { error } = await Promise.race([
+        supabase.rpc('admin_update_property', {
+          target_id: prop.id,
+          changes: {
+            title: prop.title, description: prop.description || '',
+            city: prop.city, locality: prop.locality,
+            price: prop.price, area_sqft: prop.superBuiltUpArea || null,
+            contact_phone: prop.seller?.phone || null,
+            details: {
+              latitude: prop.coordinates?.lat, longitude: prop.coordinates?.lng,
+              bedrooms: prop.bedrooms, bathrooms: prop.bathrooms,
+              balconies: prop.balconies, seller_name: prop.seller?.name,
+              featured: prop.featured, verified: prop.verified
+            }
+          }
+        }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Supabase save timed out after 20 seconds. Check your connection and admin permissions.')), 20000))
+      ]);
+      if (error) throw new Error(error.message);
+      setProperties(prev => prev.map(p => p.id === prop.id ? prop : p));
+      if (selectedProperty?.id === prop.id) setSelectedProperty(prop);
+      return;
+    }
     const firestoreData = cleanFirestoreData(prop);
     try {
       await setDoc(doc(db, 'properties', prop.id), firestoreData, { merge: true });
