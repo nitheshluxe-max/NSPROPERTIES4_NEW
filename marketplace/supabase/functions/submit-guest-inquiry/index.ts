@@ -4,7 +4,7 @@
 // GUEST_INQUIRY_HASH_SECRET, ALLOWED_ORIGINS (comma-separated https:// hosts).
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(x => x.trim().replace(/\\/$/, '')).filter(Boolean);
+const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(x => x.trim()).map(x => x.endsWith('/') ? x.slice(0, -1) : x).filter(Boolean);
 const json = (data: unknown, status: number, origin: string) => new Response(JSON.stringify(data), {
   status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': origin,
     'vary': 'Origin', 'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type, x-supabase-api-version',
