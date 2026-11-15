@@ -372,7 +372,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
           {/* Right Column (35%): Interactive OpenStreetMap Property Map - FIXED POSITION, NOT MOVED */}
           <div
             className={`w-full lg:w-[35%] lg:sticky lg:top-20 lg:h-[calc(100vh-185px)] h-[65vh] min-h-[460px] sm:h-[540px] shrink-0 ${
-              mobileViewMode === 'list' ? 'hidden lg:block' : 'block'
+              'hidden lg:block'
             }`}
           >
             <PropertyMap
@@ -417,50 +417,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
               focusTimestamp={mapFocusTimestamp}
             />
 
-            {/* Mobile Bottom Floating Card */}
-            {activeProperty && (
-              <div className="absolute bottom-3 inset-x-3 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-3 border border-slate-200 shadow-2xl flex flex-col gap-2.5">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={(Array.isArray(activeProperty?.images) && activeProperty.images[0]) || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&auto=format&fit=crop&q=80'}
-                    alt={activeProperty.title || 'Property'}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&auto=format&fit=crop&q=80';
-                    }}
-                    className="w-16 h-16 rounded-xl object-cover shrink-0 bg-slate-100"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-black text-blue-700 font-mono block">
-                      {activeProperty.priceDisplay}
-                    </span>
-                    <h4 className="text-xs font-bold text-slate-900 truncate">
-                      {activeProperty.title}
-                    </h4>
-                    <p className="text-[11px] text-slate-500 truncate">
-                      {activeProperty.locality}, {activeProperty.city}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Mobile Action Controls */}
-                <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-                  <button
-                    onClick={() => setSelectedProperty(activeProperty)}
-                    className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>View Property Details</span>
-                  </button>
-                  <button
-                    onClick={() => setMobileViewMode('list')}
-                    className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl flex items-center justify-center cursor-pointer"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
