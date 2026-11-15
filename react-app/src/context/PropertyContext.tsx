@@ -479,6 +479,12 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           price: Number(row.price),
           superBuiltUpArea: Number(row.area_sqft) || 1200,
           images: row.photoUrls,
+          coordinates: row.latitude != null && row.longitude != null ? {lat:Number(row.latitude),lng:Number(row.longitude)} : undefined,
+          bedrooms: row.bedrooms == null ? undefined : Number(row.bedrooms),
+          bathrooms: row.bathrooms == null ? undefined : Number(row.bathrooms),
+          balconies: row.balconies == null ? undefined : Number(row.balconies),
+          featured: row.featured,
+          verified: row.verified,
           status: 'approved',
           seller: {
             id: 'public-listing',
@@ -1141,6 +1147,21 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (error) throw new Error(error.message);
       setProperties(prev => prev.map(p => p.id === prop.id ? prop : p));
       if (selectedProperty?.id === prop.id) setSelectedProperty(prop);
+      // Refresh the public approved view so the admin and listing cards use persisted values.
+      const { listApprovedProperties } = await import('../lib/propertyRepository');
+      const saved = (await listApprovedProperties()).find(row => row.id === prop.id);
+      if (saved) {
+        setProperties(prev => prev.map(p => p.id === prop.id ? normalizeProperty({
+          ...prop, title:saved.title, description:saved.description || '',
+          city:saved.city, locality:saved.locality, price:Number(saved.price),
+          superBuiltUpArea:Number(saved.area_sqft) || prop.superBuiltUpArea,
+          coordinates:saved.latitude != null && saved.longitude != null ? {lat:Number(saved.latitude),lng:Number(saved.longitude)} : prop.coordinates,
+          bedrooms:saved.bedrooms == null ? prop.bedrooms : Number(saved.bedrooms),
+          bathrooms:saved.bathrooms == null ? prop.bathrooms : Number(saved.bathrooms),
+          balconies:saved.balconies == null ? prop.balconies : Number(saved.balconies),
+          featured:saved.featured, verified:saved.verified
+        }) : p));
+      }
       return;
     }
     const firestoreData = cleanFirestoreData(prop);
