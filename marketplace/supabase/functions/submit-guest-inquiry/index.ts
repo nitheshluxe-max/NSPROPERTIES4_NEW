@@ -4,10 +4,10 @@
 // GUEST_INQUIRY_HASH_SECRET, ALLOWED_ORIGINS (comma-separated https:// hosts).
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(x => x.trim()).filter(Boolean);
+const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') || '').split(',').map(x => x.trim().replace(/\\/$/, '')).filter(Boolean);
 const json = (data: unknown, status: number, origin: string) => new Response(JSON.stringify(data), {
   status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': origin,
-    'vary': 'Origin', 'access-control-allow-headers': 'content-type, authorization, apikey',
+    'vary': 'Origin', 'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type, x-supabase-api-version',
     'access-control-allow-methods': 'POST, OPTIONS' }
 });
 const clean = (x: unknown) => typeof x === 'string' ? x.trim() : '';
@@ -18,7 +18,10 @@ async function hash(value: string) {
 }
 Deno.serve(async req => {
   const origin = req.headers.get('origin') || '';
-  if (!origin || !allowedOrigins.includes(origin)) return new Response('Forbidden origin', {status:403});
+  if (!origin || !allowedOrigins.includes(origin)) {
+    console.warn('Guest inquiry rejected origin:', origin || '(missing)');
+    return new Response('Forbidden origin', {status:403});
+  }
   if (req.method === 'OPTIONS') return json({}, 200, origin);
   if (req.method !== 'POST') return json({error:'Method not allowed'},405,origin);
   try {
