@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, ArrowLeft, Check, CheckCircle2, ChevronLeft, ChevronRight, FileText, ImagePlus, MapPin, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { OpenStreetMapPinPicker } from './OpenStreetMapPinPicker';
 
 type Fields = Record<string, string>;
 type PropertyCategory = 'apartment' | 'villa' | 'independent-building' | 'land' | 'commercial';
@@ -208,12 +209,12 @@ export function ReferencePostPropertyForm({ onSubmitted }: { onSubmitted:()=>voi
           </div>
         </Group>
         <Group title="Exact Location & Map Pin">
-          <p className="text-xs text-slate-500">Enter coordinates from Google Maps to attach an accurate map pin. These are saved with the property.</p>
+          <p className="text-xs text-slate-500">Tap the map or drag the pin to choose the exact property location. Coordinates are saved with your property.</p>
           <div className="grid sm:grid-cols-2 gap-4">
             <TextField name="latitude" type="number" value={f.latitude} onChange={set} placeholder="e.g. 12.9698"/>
             <TextField name="longitude" type="number" value={f.longitude} onChange={set} placeholder="e.g. 77.7499"/>
           </div>
-          <a className="inline-flex items-center gap-2 text-blue-700 text-xs font-bold" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer"><MapPin className="w-4 h-4"/> Find your pin on Google Maps</a>
+          <OpenStreetMapPinPicker latitude={f.latitude} longitude={f.longitude} onChange={({lat,lng})=>setF(prev=>({...prev,latitude:String(lat),longitude:String(lng)}))}/>
         </Group>
       </div>}
       {step===3&&<div className="space-y-6">
