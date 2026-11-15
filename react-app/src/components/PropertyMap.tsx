@@ -96,9 +96,20 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({properties,onSelectProp
 
   useEffect(()=>{
     if(!mapRef.current)return;
-    const timer=window.setTimeout(()=>mapRef.current?.invalidateSize(),100);
+    const timer=window.setTimeout(()=>mapRef.current?.invalidateSize({pan:false}),100);
     return ()=>window.clearTimeout(timer);
   },[effectiveFullscreen,isFullScreenMode,mapReady]);
+
+  useEffect(()=>{
+    const element=rootRef.current;
+    if(!element || !mapRef.current)return;
+    const resize=()=>mapRef.current?.invalidateSize({pan:false});
+    const observer=new ResizeObserver(resize);
+    observer.observe(element);
+    window.addEventListener('orientationchange',resize);
+    const timer=window.setTimeout(resize,300);
+    return ()=>{observer.disconnect();window.removeEventListener('orientationchange',resize);window.clearTimeout(timer);};
+  },[mapReady]);
 
   async function locate(){
     const coords=await requestUserLocation();
@@ -109,7 +120,7 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({properties,onSelectProp
     else setLocalFullscreen(v=>!v);
   }
   const active=selected||valid.find(p=>p.id===activeMapPropertyId)||null;
-  return <div className={`relative w-full bg-slate-100 overflow-hidden flex flex-col ${effectiveFullscreen?'fixed inset-0 z-[100]':'rounded-2xl border border-slate-200 shadow-md min-h-[460px] h-full'}`}>
+  return <div className={`relative w-full bg-slate-100 overflow-hidden flex flex-col ${effectiveFullscreen?'h-full min-h-0':'rounded-2xl border border-slate-200 shadow-md min-h-[460px] h-full'}`}>
     <div ref={rootRef} className="absolute inset-0 z-0" aria-label="Interactive OpenStreetMap property map"/>
     <div className="absolute top-3 left-3 z-[500] flex flex-wrap gap-2 max-w-[calc(100%-120px)]">
       <span className="bg-white/95 border border-slate-200 shadow-sm rounded-lg px-2.5 py-2 text-xs font-extrabold text-slate-800 flex items-center gap-1.5"><Layers className="w-4 h-4 text-blue-600"/> OpenStreetMap</span>
