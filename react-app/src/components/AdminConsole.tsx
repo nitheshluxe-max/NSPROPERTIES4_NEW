@@ -865,12 +865,7 @@ const AdminConsoleContent: React.FC = () => {
               {/* Reset Visitor Stats Action Button */}
               <button
                 type="button"
-                onClick={async () => {
-                  if (window.confirm('Reset visitor statistics and purge any old cached numbers back to real live count (1)?')) {
-                    await resetVisitorStats();
-                    showToast('Visitor statistics reset to exact live count (1).');
-                  }
-                }}
+                onClick={() => showToast('Live session metrics are read-only and cannot be reset here.')}
                 className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                 title="Visitor counts come from Supabase and cannot be reset here"
               >
