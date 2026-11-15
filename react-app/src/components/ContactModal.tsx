@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { supabase } from '../lib/supabase';
 import { useProperty } from '../context/PropertyContext';
 import { X, CheckCircle2, Phone, Calendar, MessageSquare, FileText } from 'lucide-react';
 
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+type TurnstileApi = { render: (el: HTMLElement, options: Record<string, unknown>) => string; remove: (id: string) => void; reset: (id: string) => void };
+const getTurnstile = () => (window as Window & { turnstile?: TurnstileApi }).turnstile;
+
 export const ContactModal: React.FC = () => {
-  const { isContactModalOpen, closeContactModal, contactProperty, addInquiry } = useProperty();
+  const { isContactModalOpen, closeContactModal, contactProperty } = useProperty();
 
   const [inquiryType, setInquiryType] = useState<'callback' | 'site_visit' | 'whatsapp' | 'price_sheet'>('callback');
   const [name, setName] = useState('');
@@ -14,16 +19,53 @@ export const ContactModal: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const captchaElement = useRef<HTMLDivElement>(null);
+  const widgetId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isContactModalOpen || !contactProperty || !turnstileSiteKey) return;
+    let cancelled = false;
+    const render = () => {
+      if (cancelled || !captchaElement.current || widgetId.current || !getTurnstile()) return;
+      widgetId.current = getTurnstile()!.render(captchaElement.current, {
+        sitekey: turnstileSiteKey,
+        callback: (token: string) => setCaptchaToken(token),
+        'expired-callback': () => setCaptchaToken(''),
+        'error-callback': () => setCaptchaToken('')
+      });
+    };
+    const scriptId = 'nsp4-turnstile-script';
+    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      document.head.appendChild(script);
+    }
+    script.addEventListener('load', render);
+    const interval = window.setInterval(render, 200);
+    render();
+    return () => {
+      cancelled = true;
+      script?.removeEventListener('load', render);
+      window.clearInterval(interval);
+      if (widgetId.current && getTurnstile()) getTurnstile()!.remove(widgetId.current);
+      widgetId.current = null;
+      setCaptchaToken('');
+    };
+  }, [isContactModalOpen, contactProperty?.id]);
 
   if (!isContactModalOpen || !contactProperty) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+    if (!turnstileSiteKey || !captchaToken) { setSubmitError('Complete the security verification before submitting.'); return; }
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      await addInquiry({
+      const inquiry = {
       propertyId: contactProperty.id,
       propertyTitle: contactProperty.title,
       propertyPriceDisplay: contactProperty.priceDisplay,
@@ -34,11 +76,27 @@ export const ContactModal: React.FC = () => {
       inquiryType,
       scheduledDate: visitDate || undefined,
       message: message || `Inquiring about ${contactProperty.title} in ${contactProperty.city}.`
-    });
+    };
+      const {data, error} = await supabase.functions.invoke('submit-guest-inquiry', {body: {
+        property_id: inquiry.propertyId, user_name: inquiry.userName, user_phone: inquiry.userPhone,
+        user_email: inquiry.userEmail, inquiry_type: inquiry.inquiryType,
+        scheduled_date: inquiry.scheduledDate, message: inquiry.message, captcha_token: captchaToken,
+        website: ''
+      }});
+      if (error || !data?.id) {
+        let detail = error?.message || 'Inquiry could not be saved.';
+        const context = (error as {context?: Response} | null)?.context;
+        if (context && typeof context.json === 'function') {
+          try { const payload = await context.json(); detail = payload.error || detail; } catch { /* retain original error */ }
+        }
+        throw new Error(detail);
+      }
 
       setIsSubmitted(true);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to save inquiry. Please try again.');
+      setCaptchaToken('');
+      if (widgetId.current && getTurnstile()) getTurnstile()!.reset(widgetId.current);
     } finally {
       setIsSubmitting(false);
     }
@@ -96,6 +154,8 @@ export const ContactModal: React.FC = () => {
         ) : (
           <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 text-xs text-slate-700 flex-1 overflow-y-auto">
             {submitError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-xs text-rose-800">Inquiry not saved: {submitError}</div>}
+            <div ref={captchaElement} aria-label="Security verification" />
+            {!turnstileSiteKey && <p role="alert" className="text-rose-700">Guest inquiry verification is not configured. Set VITE_TURNSTILE_SITE_KEY in Vercel.</p>}
             {/* Inquiry Action Type */}
             <div>
               <label className="block font-bold text-slate-800 mb-2">I want to:</label>
