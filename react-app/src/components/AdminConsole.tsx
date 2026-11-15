@@ -344,6 +344,8 @@ const AdminConsoleContent: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        {liveLoading && <div role="status" className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">Loading CRM, registered users and visitor sessions from Supabase…</div>}
+        {liveError && <div role="alert" className="mb-4 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800">Live admin data unavailable: {liveError}. Apply phase10_live_admin_crm.sql and confirm your Supabase admin login.</div>}
         {/* Executive Overview KPI Metric Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           {/* VISITOR COUNT KPI CARD */}
@@ -351,7 +353,7 @@ const AdminConsoleContent: React.FC = () => {
             <div className="flex items-center justify-between text-blue-200 text-xs font-semibold mb-1">
               <span className="flex items-center gap-1">
                 <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                Live Visitors
+                Recorded Sessions
               </span>
               <Globe2 className="w-4 h-4 text-blue-300" />
             </div>
@@ -359,8 +361,8 @@ const AdminConsoleContent: React.FC = () => {
               {(safeVisitorStats.totalVisitors ?? 0).toLocaleString('en-IN')}
             </span>
             <div className="text-[11px] text-blue-200 mt-1 flex items-center justify-between">
-              <span>Today: +{safeVisitorStats.todayVisitors ?? 0}</span>
-              <span className="text-emerald-300 font-bold">{safeVisitorStats.activeNow ?? 0} online</span>
+              <span>Today (UTC): {safeVisitorStats.todayVisitors ?? 0}</span>
+              <span className="text-emerald-300 font-bold">{safeVisitorStats.activeNow ?? 0} active sessions</span>
             </div>
           </div>
 
@@ -870,7 +872,7 @@ const AdminConsoleContent: React.FC = () => {
                   }
                 }}
                 className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                title="Reset total and today visitors to 1 and sync clean state"
+                title="Visitor counts come from Supabase and cannot be reset here"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Live Sessions (Read Only)</span>
@@ -880,7 +882,7 @@ const AdminConsoleContent: React.FC = () => {
             {/* Top Cards for Visitors */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs">
-                <span className="text-xs font-semibold text-slate-500 block mb-1">Lifetime Unique Visitors</span>
+                <span className="text-xs font-semibold text-slate-500 block mb-1">Recorded Browser Sessions</span>
                 <span className="text-3xl font-black text-blue-700 font-mono tabular-nums block">
                   {(safeVisitorStats.totalVisitors ?? 1).toLocaleString('en-IN')}
                 </span>
@@ -890,7 +892,7 @@ const AdminConsoleContent: React.FC = () => {
               </div>
 
               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs">
-                <span className="text-xs font-semibold text-slate-500 block mb-1">Visitors Today</span>
+                <span className="text-xs font-semibold text-slate-500 block mb-1">Sessions Today (UTC)</span>
                 <span className="text-3xl font-black text-slate-900 font-mono tabular-nums block">
                   {(safeVisitorStats.todayVisitors ?? 1).toLocaleString('en-IN')}
                 </span>
