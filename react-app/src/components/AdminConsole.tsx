@@ -992,7 +992,7 @@ const AdminConsoleContent: React.FC = () => {
           <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
             <div className="p-4 border-b border-slate-200">
               <h3 className="text-sm font-bold text-slate-900">User & Partner Directory</h3>
-              <p className="text-xs text-slate-500">Registered owners, certified broker agents, and builders</p>
+              <p className="text-xs text-slate-500">Registered Supabase accounts; roles are self-declared unless separately verified</p>
             </div>
 
             <div className="overflow-x-auto">
@@ -1004,7 +1004,7 @@ const AdminConsoleContent: React.FC = () => {
                     <th className="py-3 px-4">Contact Info</th>
                     <th className="py-3 px-4">Base City</th>
                     <th className="py-3 px-4">Properties Posted</th>
-                    <th className="py-3 px-4">Verification</th>
+                    <th className="py-3 px-4">Account Confirmation</th>
                     <th className="py-3 px-4">Member Since</th>
                   </tr>
                 </thead>
@@ -1049,10 +1049,10 @@ const AdminConsoleContent: React.FC = () => {
                           {u.verified ? (
                             <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
                               <ShieldCheck className="w-3.5 h-3.5" />
-                              Verified
+                              Confirmed
                             </span>
                           ) : (
-                            <span className="text-slate-400">Unverified</span>
+                            <span className="text-slate-400">Not confirmed</span>
                           )}
                         </td>
 
