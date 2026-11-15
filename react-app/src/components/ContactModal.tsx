@@ -12,13 +12,18 @@ export const ContactModal: React.FC = () => {
   const [visitDate, setVisitDate] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   if (!isContactModalOpen || !contactProperty) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    addInquiry({
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      await addInquiry({
       propertyId: contactProperty.id,
       propertyTitle: contactProperty.title,
       propertyPriceDisplay: contactProperty.priceDisplay,
@@ -31,11 +36,18 @@ export const ContactModal: React.FC = () => {
       message: message || `Inquiring about ${contactProperty.title} in ${contactProperty.city}.`
     });
 
-    setIsSubmitted(true);
+      setIsSubmitted(true);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Unable to save inquiry. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
     setIsSubmitted(false);
+    setSubmitError(null);
+    setIsSubmitting(false);
     setName('');
     setPhone('');
     setEmail('');
@@ -68,7 +80,7 @@ export const ContactModal: React.FC = () => {
             </div>
             <h4 className="text-lg font-bold text-slate-900">Inquiry Sent Successfully!</h4>
             <p className="text-xs text-slate-600">
-              The property advertiser (<strong>{contactProperty.seller?.name || 'NS Properties Advisor'}</strong>) and NS Properties 4 desk have received your request.
+              Your inquiry has been saved successfully. The NS Properties 4 team can now review it in the admin CRM.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 text-left space-y-1">
               <div><span className="font-semibold">Direct Seller Line:</span> {contactProperty.seller?.phone || '8073266325'}</div>
@@ -83,6 +95,7 @@ export const ContactModal: React.FC = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 text-xs text-slate-700 flex-1 overflow-y-auto">
+            {submitError && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-xs text-rose-800">Inquiry not saved: {submitError}</div>}
             {/* Inquiry Action Type */}
             <div>
               <label className="block font-bold text-slate-800 mb-2">I want to:</label>
@@ -176,7 +189,7 @@ export const ContactModal: React.FC = () => {
 
             <div className="pt-2">
               <button
-                type="submit"
+                type="submit" disabled={isSubmitting}
                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
               >
                 Send Inquiry to Seller

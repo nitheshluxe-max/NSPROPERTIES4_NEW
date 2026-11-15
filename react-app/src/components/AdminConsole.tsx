@@ -148,6 +148,7 @@ const AdminConsoleContent: React.FC = () => {
     deviceBreakdown: {mobile: 0, desktop: 0, tablet: 0}
   });
   const [liveError, setLiveError] = useState<string | null>(null);
+  const [inquiryLoadError, setInquiryLoadError] = useState<string | null>(null);
   const [liveLoading, setLiveLoading] = useState(true);
   useEffect(() => {
     let mounted = true;
@@ -160,6 +161,7 @@ const AdminConsoleContent: React.FC = () => {
       if (!mounted) return;
       const errors = [leads.error, directory.error, analytics.error].filter(Boolean);
       setLiveError(errors.length ? errors.map(e => e?.message).join(' | ') : null);
+      setInquiryLoadError(leads.error?.message || null);
       if (!leads.error) {
         setLiveInquiries((leads.data || []).map((i: any) => ({
           id: i.id, propertyId: i.property_id,
@@ -706,6 +708,7 @@ const AdminConsoleContent: React.FC = () => {
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Buyer Inquiries & Site Visit CRM</h3>
                 <p className="text-xs text-slate-500">Track and progress buyer leads from inquiry to closure</p>
+                {inquiryLoadError && <p role="alert" className="mt-2 text-xs font-semibold text-rose-700">Could not load Supabase inquiries: {inquiryLoadError}</p>}
               </div>
 
               <div className="relative min-w-[240px] w-full sm:w-auto">
@@ -736,7 +739,7 @@ const AdminConsoleContent: React.FC = () => {
                   {filteredInquiries.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-slate-400">
-                        No inquiries recorded yet. Inquiries submitted via property cards will appear here.
+                        {liveLoading ? 'Loading inquiries from Supabase…' : inquiryLoadError ? 'Inquiry records unavailable. Check the database error above.' : 'No saved inquiries found in Supabase.'}
                       </td>
                     </tr>
                   ) : (
