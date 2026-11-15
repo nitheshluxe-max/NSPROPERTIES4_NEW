@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: '/NSPROPERTIES4_NEW/',
+    base: process.env.VERCEL === '1' ? '/' : '/NSPROPERTIES4_NEW/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
