@@ -45,7 +45,7 @@ Deno.serve(async req => {
         email.length > 254 || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ||
         !['callback','site_visit','whatsapp','price_sheet'].includes(inquiryType) ||
         message.length > 2000 || scheduled.length > 40 ||
-        (inquiryType === 'site_visit' && !/^\d{4}-\d{2}-\d{2}$/.test(scheduled)) ||
+        (inquiryType === 'site_visit' && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(scheduled)) ||
         token.length < 10) return json({error:'Please check the inquiry details and verification.'},400,origin);
     const ip = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '';
     if (!ip) return json({error:'Could not verify request origin'},400,origin);
