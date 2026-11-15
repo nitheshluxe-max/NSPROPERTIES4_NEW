@@ -14,13 +14,20 @@ export type MarketplaceProperty = {
   publish_contact: boolean;
   status: 'approved';
   created_at: string;
+  latitude: number | null;
+  longitude: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  balconies: number | null;
+  featured: boolean;
+  verified: boolean;
 };
 
 export type PropertyPhoto = { property_id: string; storage_path: string; sort_order: number };
 
 export async function listApprovedProperties(): Promise<(MarketplaceProperty & { photoUrls: string[] })[]> {
   const { data, error } = await supabase.from('public_properties')
-    .select('id,title,description,city,locality,purpose,property_type,price,area_sqft,contact_phone,publish_contact,status,created_at')
+    .select('id,title,description,city,locality,purpose,property_type,price,area_sqft,contact_phone,publish_contact,status,created_at,latitude,longitude,bedrooms,bathrooms,balconies,featured,verified')
     .eq('status', 'approved').order('created_at', { ascending: false }).limit(100);
   if (error) throw error;
   const listings = (data ?? []) as MarketplaceProperty[];
