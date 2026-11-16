@@ -85,6 +85,10 @@ export const ContactModal: React.FC = () => {
       }});
       if (error || !data?.id) {
         let detail = error?.message || 'Inquiry could not be saved.';
+        // Network/CORS failures have no readable HTTP response; give actionable guidance.
+        if (error?.message?.includes('Failed to send a request to the Edge Function')) {
+          detail = 'Unable to reach the inquiry service. Please retry shortly or contact us directly. (Network/CORS error)';
+        }
         const context = (error as {context?: Response} | null)?.context;
         if (context && typeof context.json === 'function') {
           try { const payload = await context.json(); detail = payload.error || detail; } catch { /* retain original error */ }
