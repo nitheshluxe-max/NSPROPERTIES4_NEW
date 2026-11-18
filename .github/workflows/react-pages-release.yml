@@ -23,7 +23,7 @@ jobs:
           node-version: '24.12.0'
       - name: Install dependencies
         working-directory: react-app
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund --prefer-online
       - name: Type check
         working-directory: react-app
         run: npm run lint
