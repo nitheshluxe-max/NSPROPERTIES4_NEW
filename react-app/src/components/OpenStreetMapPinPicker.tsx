@@ -72,7 +72,11 @@ export const OpenStreetMapPinPicker: React.FC<Props> = ({ latitude, longitude, o
 
   const searchLocation = async () => {
     const term = query.trim();
-    if (term.length < 3 || searching) return;
+    if (searching) return;
+    if (term.length < 3) {
+      setSearchError('Enter at least 3 characters, for example Whitefield or Varthur.');
+      return;
+    }
     // Public Nominatim: explicit user-initiated searches only, no autocomplete.
     if (Date.now() - lastSearch.current < 1200) {
       setSearchError('Please wait a moment before searching again.');
@@ -115,7 +119,7 @@ export const OpenStreetMapPinPicker: React.FC<Props> = ({ latitude, longitude, o
       <label htmlFor="property-location-search" className="block text-xs font-semibold text-slate-700">Search location or landmark</label>
       <div className="flex gap-2">
         <input id="property-location-search" type="search" value={query} onChange={e => { setQuery(e.target.value); setResults([]); setSearchError(''); }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void searchLocation(); } }} placeholder="e.g. Varthur, Whitefield, Bengaluru" autoComplete="off" className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none" />
-        <button type="button" onClick={() => void searchLocation()} disabled={searching || query.trim().length < 3} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{searching ? 'Searching…' : 'Search'}</button>
+        <button type="button" onClick={event => { event.preventDefault(); event.stopPropagation(); void searchLocation(); }} disabled={searching} className="relative z-20 cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{searching ? 'Searching…' : 'Search'}</button>
       </div>
       {searchError && <p role="status" className="text-xs text-amber-700">{searchError}</p>}
       {results.length > 0 && <div aria-label="Location search results" className="max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white">
