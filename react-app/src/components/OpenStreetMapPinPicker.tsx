@@ -39,7 +39,10 @@ export const OpenStreetMapPinPicker: React.FC<Props> = ({ latitude, longitude, o
     const update = (point: L.LatLng) => onChangeRef.current({
       lat: Number(point.lat.toFixed(6)), lng: Number(point.lng.toFixed(6))
     });
-    instance.on('click', event => update(event.latlng));
+    instance.on('click', event => {
+      marker.setLatLng(event.latlng);
+      update(event.latlng);
+    });
     marker.on('dragend', () => update(marker.getLatLng()));
     const observer = new ResizeObserver(() => instance.invalidateSize({ pan: false }));
     observer.observe(container.current);
@@ -62,7 +65,7 @@ export const OpenStreetMapPinPicker: React.FC<Props> = ({ latitude, longitude, o
 
   return <div className="space-y-2">
     <p className="text-xs text-slate-600">Tap the map or drag the blue pin to select the exact property location.</p>
-    <div ref={container} className="relative z-0 h-[300px] sm:h-[360px] w-full overflow-hidden rounded-xl border border-slate-200" aria-label="Select property location on OpenStreetMap" />
+    <div ref={container} className="relative z-0 w-full overflow-hidden rounded-xl border border-slate-200" style={{ height: 320, minHeight: 320 }} aria-label="Select property location on OpenStreetMap" />
     <p className="text-xs text-slate-500">{hasCoords ? `Selected: ${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'Pin starts in Bengaluru. Tap or drag it to set your location.'}</p>
   </div>;
 };
