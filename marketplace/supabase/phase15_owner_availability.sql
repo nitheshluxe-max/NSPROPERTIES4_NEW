@@ -69,9 +69,3 @@ language sql security definer set search_path='' as $$
 $$;
 revoke all on function public.owner_list_properties() from public,anon;
 grant execute on function public.owner_list_properties() to authenticated;
- then (p.details->>'longitude')::numeric else null end,
- coalesce(p.details->>'availability','available')
- from public.properties p where p.user_id=(select auth.uid()) order by p.created_at desc;
-$$;
-revoke all on function public.owner_list_properties() from public,anon;
-grant execute on function public.owner_list_properties() to authenticated;
