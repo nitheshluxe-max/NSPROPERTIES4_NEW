@@ -63,7 +63,8 @@ language sql security definer set search_path='' as $$
  select p.id,p.title,p.description,p.city,p.locality,p.price,p.area_sqft,p.contact_phone,p.publish_contact,p.status,p.created_at,
  exists(select 1 from public.property_edit_requests r where r.property_id=p.id and r.status='pending'),
  case when (p.details->>'latitude') ~ '^[-+]?[0-9]+(\.[0-9]+)?$' then (p.details->>'latitude')::numeric else null end,
- case when (p.details->>'longitude') ~ '^[-+]?[0-9]+(\.[0-9]+)?
+ case when (p.details->>'longitude') ~ '^[-+]?[0-9]+(\.[0-9]+)?$' then (p.details->>'longitude')::numeric else null end,
+ coalesce(p.details->>'availability','available')
  from public.properties p where p.user_id=(select auth.uid()) order by p.created_at desc;
 $$;
 revoke all on function public.owner_list_properties() from public,anon;
