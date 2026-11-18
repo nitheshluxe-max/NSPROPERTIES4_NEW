@@ -70,8 +70,7 @@ export const OpenStreetMapPinPicker: React.FC<Props> = ({ latitude, longitude, o
     if (hasCoords) map.current.panTo(point);
   }, [latitude, longitude, hasCoords, lat, lng]);
 
-  const searchLocation = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const searchLocation = async () => {
     const term = query.trim();
     if (term.length < 3 || searching) return;
     // Public Nominatim: explicit user-initiated searches only, no autocomplete.
@@ -90,13 +89,13 @@ export const OpenStreetMapPinPicker: React.FC<Props> = ({ latitude, longitude, o
       url.searchParams.set('limit', '5');
       url.searchParams.set('countrycodes', 'in');
       const response = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
-      if (!response.ok) throw new Error('Location service is temporarily unavailable.');
+      if (!response.ok) throw new Error(`Location search service returned HTTP ${response.status}. Please try again later.`);
       const data: Array<{ place_id: number; display_name: string; lat: string; lon: string }> = await response.json();
       if (!mounted.current) return;
       setResults(data);
       if (data.length === 0) setSearchError('No matching Indian locations found. Try a locality, landmark or full address.');
-    } catch {
-      if (mounted.current) setSearchError('Location search failed. You can still select the location manually on the map.');
+    } catch (error) {
+      if (mounted.current) setSearchError(error instanceof Error ? `${error.message} You can still select the location manually on the map.` : 'Location search failed. You can still select the location manually on the map.');
     } finally {
       if (mounted.current) setSearching(false);
     }
@@ -104,7 +103,7 @@ export const OpenStreetMapPinPicker: React.FC<Props> = ({ latitude, longitude, o
   const selectLocation = (item: { lat: string; lon: string }) => {
     const point = L.latLng(Number(item.lat), Number(item.lon));
     if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng)) return;
-    map.current?.setView(point, 16);
+    map.current?.setView(point, 16, { animate: true });
     pin.current?.setLatLng(point);
     onChangeRef.current({ lat: Number(point.lat.toFixed(6)), lng: Number(point.lng.toFixed(6)) });
     setResults([]);
@@ -112,18 +111,18 @@ export const OpenStreetMapPinPicker: React.FC<Props> = ({ latitude, longitude, o
   };
 
   return <div className="space-y-2">
-    <form onSubmit={searchLocation} className="space-y-2">
+    <div className="space-y-2">
       <label htmlFor="property-location-search" className="block text-xs font-semibold text-slate-700">Search location or landmark</label>
       <div className="flex gap-2">
-        <input id="property-location-search" type="search" value={query} onChange={e => { setQuery(e.target.value); setResults([]); setSearchError(''); }} placeholder="e.g. Varthur, Whitefield, Bengaluru" autoComplete="off" className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none" />
-        <button type="submit" disabled={searching || query.trim().length < 3} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{searching ? 'Searching…' : 'Search'}</button>
+        <input id="property-location-search" type="search" value={query} onChange={e => { setQuery(e.target.value); setResults([]); setSearchError(''); }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void searchLocation(); } }} placeholder="e.g. Varthur, Whitefield, Bengaluru" autoComplete="off" className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none" />
+        <button type="button" onClick={() => void searchLocation()} disabled={searching || query.trim().length < 3} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{searching ? 'Searching…' : 'Search'}</button>
       </div>
       {searchError && <p role="status" className="text-xs text-amber-700">{searchError}</p>}
       {results.length > 0 && <div aria-label="Location search results" className="max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white">
         {results.map(item => <button key={item.place_id} type="button" onClick={() => selectLocation(item)} className="block w-full border-b border-slate-100 px-3 py-2 text-left text-xs text-slate-700 hover:bg-blue-50">{item.display_name}</button>)}
       </div>}
       <p className="text-[11px] text-slate-500">Search results © OpenStreetMap contributors, powered by Nominatim. Search only when needed.</p>
-    </form>
+    </div>
     <p className="text-xs text-slate-600">Select a search result, tap the map or drag the blue pin to choose the exact property location.</p>
     <div ref={container} className="relative z-0 w-full overflow-hidden rounded-xl border border-slate-200" style={{ height: 320, minHeight: 320 }} aria-label="Select property location on OpenStreetMap" />
     <p className="text-xs text-slate-500">{hasCoords ? `Selected: ${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'Pin starts in Bengaluru. Tap or drag it to set your location.'}</p>
