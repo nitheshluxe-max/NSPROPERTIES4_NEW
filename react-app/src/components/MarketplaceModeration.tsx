@@ -15,6 +15,7 @@ const money = (price: number) => new Intl.NumberFormat('en-IN', {
 export function MarketplaceModeration() {
   const [properties, setProperties] = useState<ReviewItem[]>([]);
   const [editRequests,setEditRequests] = useState<Array<{id:string;property_title:string;changes:Record<string,unknown>;created_at:string}>>([]);
+  const [mediaEdits,setMediaEdits]=useState<Array<{id:string;property_id:string;status:string;photo_paths:string[];brochure_path:string|null;floor_plan_path:string|null;replace_photos:boolean;replace_brochure:boolean;replace_floor_plan:boolean;created_at:string}>>([]);
   const [filter, setFilter] = useState<'all' | ReviewStatus>('pending');
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState<string | null>(null);
@@ -35,6 +36,9 @@ export function MarketplaceModeration() {
       const edits = await supabase.rpc('admin_list_property_edits');
       if (edits.error) throw edits.error;
       setEditRequests((edits.data || []) as typeof editRequests);
+      const staged=await supabase.from('property_media_edits').select('*').eq('status','pending').order('created_at');
+      if(staged.error) throw staged.error;
+      setMediaEdits((staged.data||[]) as typeof mediaEdits);
       const entries = (data ?? []) as ReviewItem[];
       setProperties(entries);
       if (entries.length) {
@@ -91,6 +95,20 @@ export function MarketplaceModeration() {
     setNotice(approve?'Property changes approved.':'Property changes rejected.');
     await refresh();
   }
+  async function reviewMedia(id:string,approve:boolean) {
+    if(workingId||!window.confirm(approve?'Approve replacement media?':'Reject replacement media?'))return;
+    setWorkingId(id);setError('');
+    const result=await supabase.rpc('admin_review_media_edit',{request_id:id,approve});
+    setWorkingId(null);
+    if(result.error){setError(result.error.message);return;}
+    setNotice(approve?'Replacement media approved.':'Replacement media rejected.');
+    await refresh();
+  }
+  async function viewStagedPdf(path:string) {
+    const result=await supabase.storage.from('property-brochures').createSignedUrl(path,60);
+    if(result.error||!result.data?.signedUrl){setError(result.error?.message||'Unable to preview PDF');return;}
+    window.open(result.data.signedUrl,'_blank','noopener,noreferrer');
+  }
   const shown = properties.filter(p => filter === 'all' || p.status === filter);
   const pendingCount = properties.filter(p => p.status === 'pending').length;
 
@@ -118,6 +136,17 @@ export function MarketplaceModeration() {
       {error && <p role="alert" className="rounded-lg bg-red-50 text-red-800 border border-red-200 p-3 text-sm">{error}</p>}
       {notice && <p role="status" className="rounded-lg bg-green-50 text-green-800 border border-green-200 p-3 text-sm">{notice}</p>}
       {!loading && !error && shown.length === 0 && <p className="text-sm text-slate-600">No {filter === 'all' ? '' : filter} marketplace properties found.</p>}
+      <section className="border-t pt-4 space-y-3">
+        <h3 className="font-bold">Media replacement requests ({mediaEdits.length})</h3>
+        {mediaEdits.map(request=><article key={request.id} className="border rounded-xl p-3 space-y-2">
+          <p className="text-sm font-semibold">Property ID: {request.property_id}</p>
+          <p className="text-xs">Photos: {request.replace_photos?'Replace all':'Keep existing'} · Brochure: {request.replace_brochure?(request.brochure_path?'Replace':'Remove'):'Keep'} · Floor plan: {request.replace_floor_plan?(request.floor_plan_path?'Replace':'Remove'):'Keep'}</p>
+          <div className="flex flex-wrap gap-2">{request.photo_paths.map(path=><img key={path} src={supabase.storage.from('property-photos').getPublicUrl(path).data.publicUrl} alt="Proposed replacement" className="h-24 w-28 object-cover rounded"/>)}</div>
+          {request.brochure_path&&<button type="button" onClick={()=>void viewStagedPdf(request.brochure_path!)} className="text-blue-700 underline text-sm">Preview brochure PDF</button>}
+          {request.floor_plan_path&&<button type="button" onClick={()=>void viewStagedPdf(request.floor_plan_path!)} className="text-blue-700 underline text-sm ml-3">Preview floor-plan PDF</button>}
+          <div className="flex gap-2"><button type="button" disabled={!!workingId} onClick={()=>void reviewMedia(request.id,true)} className="bg-emerald-700 text-white px-3 py-2 rounded-lg disabled:opacity-50">Approve media</button><button type="button" disabled={!!workingId} onClick={()=>void reviewMedia(request.id,false)} className="bg-red-700 text-white px-3 py-2 rounded-lg disabled:opacity-50">Reject media</button></div>
+        </article>)}
+      </section>
       <section className="border-t pt-4 space-y-3">
         <h3 className="font-bold">Owner edit requests ({editRequests.length})</h3>
         {editRequests.map(request=><article key={request.id} className="border rounded-xl p-3 space-y-2">
