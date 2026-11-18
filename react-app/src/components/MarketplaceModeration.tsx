@@ -14,6 +14,7 @@ const money = (price: number) => new Intl.NumberFormat('en-IN', {
 
 export function MarketplaceModeration() {
   const [properties, setProperties] = useState<ReviewItem[]>([]);
+  const [editRequests,setEditRequests] = useState<Array<{id:string;property_title:string;changes:Record<string,unknown>;created_at:string}>>([]);
   const [filter, setFilter] = useState<'all' | ReviewStatus>('pending');
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState<string | null>(null);
@@ -31,6 +32,9 @@ export function MarketplaceModeration() {
     setError('');
     try {
       const data = await listAdminProperties();
+      const edits = await supabase.rpc('admin_list_property_edits');
+      if (edits.error) throw edits.error;
+      setEditRequests((edits.data || []) as typeof editRequests);
       const entries = (data ?? []) as ReviewItem[];
       setProperties(entries);
       if (entries.length) {
@@ -77,6 +81,16 @@ export function MarketplaceModeration() {
     }
   }
 
+  async function reviewEdit(id:string,approve:boolean) {
+    if(workingId)return;
+    if(!window.confirm(approve?'Approve these property changes?':'Reject these property changes?'))return;
+    setWorkingId(id);setError('');
+    const {error}=await supabase.rpc('admin_review_property_edit',{request_id:id,approve});
+    setWorkingId(null);
+    if(error){setError(error.message);return;}
+    setNotice(approve?'Property changes approved.':'Property changes rejected.');
+    await refresh();
+  }
   const shown = properties.filter(p => filter === 'all' || p.status === filter);
   const pendingCount = properties.filter(p => p.status === 'pending').length;
 
@@ -104,6 +118,18 @@ export function MarketplaceModeration() {
       {error && <p role="alert" className="rounded-lg bg-red-50 text-red-800 border border-red-200 p-3 text-sm">{error}</p>}
       {notice && <p role="status" className="rounded-lg bg-green-50 text-green-800 border border-green-200 p-3 text-sm">{notice}</p>}
       {!loading && !error && shown.length === 0 && <p className="text-sm text-slate-600">No {filter === 'all' ? '' : filter} marketplace properties found.</p>}
+      <section className="border-t pt-4 space-y-3">
+        <h3 className="font-bold">Owner edit requests ({editRequests.length})</h3>
+        {editRequests.map(request=><article key={request.id} className="border rounded-xl p-3 space-y-2">
+          <strong>{request.property_title}</strong>
+          <p className="text-xs text-slate-600">Submitted {new Date(request.created_at).toLocaleString('en-IN')}</p>
+          <pre className="text-xs whitespace-pre-wrap break-words bg-slate-50 p-3 rounded-lg">{JSON.stringify(request.changes,null,2)}</pre>
+          <div className="flex gap-2">
+            <button type="button" disabled={!!workingId} onClick={()=>void reviewEdit(request.id,true)} className="bg-emerald-700 text-white px-3 py-2 rounded-lg disabled:opacity-50">Approve changes</button>
+            <button type="button" disabled={!!workingId} onClick={()=>void reviewEdit(request.id,false)} className="bg-red-700 text-white px-3 py-2 rounded-lg disabled:opacity-50">Reject changes</button>
+          </div>
+        </article>)}
+      </section>
       <div className="space-y-3">
         {shown.map(item => (
           <article key={item.id} className="border border-slate-200 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">

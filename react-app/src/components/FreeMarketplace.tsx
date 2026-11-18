@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { ReferencePostPropertyForm } from './ReferencePostPropertyForm';
+import { MyProperties } from './MyProperties';
 
 type Listing = {
   id: string; title: string; city: string; locality: string; price: number;
@@ -140,6 +141,7 @@ export function FreeMarketplace() {
         </div>
       </section>
       {message && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-5 text-sm">{message}</p>}
+      {account && <div className="mb-8"><MyProperties refreshKey={refresh}/></div>}
       {postOpen && <section className="rounded-2xl bg-white border border-slate-200 p-6 mb-8">
         <h2 className="text-2xl font-bold mb-2">List your property free</h2>
         <p className="text-sm text-slate-600 mb-4">Sign up or sign in before posting. Your listing will appear publicly only after admin approval.</p>
