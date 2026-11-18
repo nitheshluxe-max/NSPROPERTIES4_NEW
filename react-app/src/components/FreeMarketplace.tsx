@@ -21,14 +21,14 @@ export function FreeMarketplace() {
   const [type, setType] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  const [postOpen, setPostOpen] = useState(() => window.location.hash === '#post-property');
+  const [postOpen, setPostOpen] = useState(() => ['#post-property', '#my-properties'].includes(window.location.hash));
   useEffect(() => {
-    const sync = () => setPostOpen(window.location.hash === '#post-property');
+    const sync = () => setPostOpen(['#post-property', '#my-properties'].includes(window.location.hash));
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
   }, []);
   const [account, setAccount] = useState<{ id: string; email?: string } | null>(null);
-  const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
+  const [authMode, setAuthMode] = useState<'signup' | 'signin'>(() => window.location.hash === '#my-properties' ? 'signin' : 'signup');
   const [authBusy, setAuthBusy] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
   useEffect(() => {
@@ -128,6 +128,7 @@ export function FreeMarketplace() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-wrap justify-between gap-4 items-center mb-6">
         <a href="#home" className="text-blue-700 font-semibold">← Back to NS Properties 4</a>
+        <a href="#my-properties" className="rounded-lg bg-blue-700 text-white px-4 py-2 font-semibold">My Properties / Edit Listings</a>
 
       </div>
       <section className="rounded-2xl bg-slate-900 text-white p-7 md:p-12 mb-8">
@@ -141,9 +142,9 @@ export function FreeMarketplace() {
         </div>
       </section>
       {message && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-5 text-sm">{message}</p>}
-      {account && <div className="mb-8"><MyProperties refreshKey={refresh}/></div>}
+      {account && <div id="my-properties" className="mb-8"><MyProperties refreshKey={refresh}/></div>}
       {postOpen && <section className="rounded-2xl bg-white border border-slate-200 p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-2">List your property free</h2>
+        <h2 className="text-2xl font-bold mb-2">{window.location.hash === "#my-properties" ? "Sign in to manage your properties" : "List your property free"}</h2>
         <p className="text-sm text-slate-600 mb-4">Sign up or sign in before posting. Your listing will appear publicly only after admin approval.</p>
         {!account ? <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-5">
           <div className="flex gap-2 mb-4">
@@ -162,7 +163,7 @@ export function FreeMarketplace() {
           <span>Signed in as <strong>{account.email}</strong></span>
           <button type="button" onClick={() => void signOutMarketplace()} className="text-blue-700 underline">Sign out</button>
         </div>}
-        {account && <ReferencePostPropertyForm onSubmitted={() => setRefresh(v => v + 1)} />}
+        {account && window.location.hash !== "#my-properties" && <ReferencePostPropertyForm onSubmitted={() => setRefresh(v => v + 1)} />}
       </section>}
       {brochureError && <p role="alert" className="text-red-700 mb-4">{brochureError}</p>}
       <h2 className="text-2xl font-bold mb-4">Available properties {busy ? '· Loading…' : '(' + visible.length + ')'}</h2>
