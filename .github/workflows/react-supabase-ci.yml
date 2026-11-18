@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: '24.12.0'
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund --prefer-online
       - name: TypeScript validation
         run: npm run lint
       - name: Production build
