@@ -8,6 +8,7 @@ type Listing = {
   area_sqft: number | null; property_type: string; purpose: string;
   description: string | null; publish_contact: boolean; contact_phone: string | null;
   created_at: string;
+  tier?: 'gold'|'silver'|null;
   photoUrls?: string[];
   brochurePath?: string;
   brochureName?: string;
@@ -99,18 +100,20 @@ export function FreeMarketplace() {
         const listings = (data || []) as Listing[];
         if (!listings.length) { setMessage(''); setItems([]); return; }
         const ids = listings.map(p => p.id);
-        const [photoResult, brochureResult] = await Promise.all([
+        const [photoResult, brochureResult, highlightsResult] = await Promise.all([
           supabase.from('property_photos').select('property_id,storage_path,sort_order').in('property_id', ids).order('sort_order'),
-          supabase.from('property_brochures').select('property_id,storage_path,file_name').in('property_id', ids)
+          supabase.from('property_brochures').select('property_id,storage_path,file_name').in('property_id', ids),
+          supabase.from('public_property_highlights').select('property_id,tier').in('property_id',ids)
         ]);
         if (!active) return;
-        if (photoResult.error || brochureResult.error) {
-          console.warn('Marketplace media query failed:', photoResult.error?.message || brochureResult.error?.message);
+        if (photoResult.error || brochureResult.error || highlightsResult.error) {
+          console.warn('Marketplace media query failed:', photoResult.error?.message || brochureResult.error?.message || highlightsResult.error?.message);
         }
         setMessage('');
         setItems(listings.map(p => {
           const brochure = brochureResult.data?.find(b => b.property_id === p.id);
           return { ...p,
+            tier: (highlightsResult.data?.find(h=>h.property_id===p.id)?.tier as Listing['tier'])||null,
             photoUrls: (photoResult.data || []).filter(photo => photo.property_id === p.id).map(photo =>
               supabase.storage.from('property-photos').getPublicUrl(photo.storage_path).data.publicUrl),
             brochurePath: brochure?.storage_path, brochureName: brochure?.file_name
@@ -121,7 +124,7 @@ export function FreeMarketplace() {
     void load();
     return () => { active = false; };
   }, [purpose, type, refresh]);
-  const visible = items.filter(p => [p.title, p.city, p.locality].some(s => s.toLowerCase().includes(query.toLowerCase().trim())));
+  const visible = items.filter(p => [p.title, p.city, p.locality].some(s => s.toLowerCase().includes(query.toLowerCase().trim()))).sort((a,b)=>({gold:0,silver:1}[a.tier||'']??2)-({gold:0,silver:1}[b.tier||'']??2));
 
   const inputClass = 'w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white text-slate-900';
   return <main className="min-h-screen bg-slate-50">
@@ -169,7 +172,8 @@ export function FreeMarketplace() {
       <h2 className="text-2xl font-bold mb-4">Available properties {busy ? '· Loading…' : '(' + visible.length + ')'}</h2>
       {!busy && visible.length === 0 && <p className="text-slate-600">No approved properties match your search.</p>}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {visible.map(p => <article key={p.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        {visible.map(p => <article key={p.id} className={`rounded-xl border-2 shadow-sm p-5 transition-shadow hover:shadow-lg ${p.tier==='gold'?'bg-gradient-to-br from-amber-50 via-white to-yellow-50 border-amber-400 shadow-amber-100':p.tier==='silver'?'bg-gradient-to-br from-slate-100 via-white to-gray-50 border-slate-400':'bg-white border-slate-200'}`}>
+          {p.tier&&<div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold tracking-wide ${p.tier==='gold'?'bg-amber-200 text-amber-950':'bg-slate-200 text-slate-800'}`} aria-label={`${p.tier} featured collection`}>{p.tier==='gold'?'✦ Gold Collection':'◆ Silver Collection'}</div>}
           {p.photoUrls?.length ? <div className="mb-4"><img src={p.photoUrls[0]} alt={p.title} loading="lazy" className="w-full h-48 object-cover rounded-lg"/>{p.photoUrls.length > 1 && <div className="flex gap-2 overflow-x-auto mt-2">{p.photoUrls.slice(1).map(url => <img key={url} src={url} alt={p.title + ' additional view'} loading="lazy" className="h-16 w-20 object-cover rounded-md" />)}</div>}</div> : null}
           <h3 className="font-bold text-lg">{p.title}</h3><p className="text-blue-700 text-xl font-black my-2">{money(p.price)}</p>
           <p className="text-sm text-slate-600">{p.locality}, {p.city}</p>
