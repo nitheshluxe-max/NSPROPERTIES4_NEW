@@ -10,7 +10,6 @@ import {
 import { Navbar } from './components/Navbar';
 import { FreeMarketplace } from './components/FreeMarketplace';
 import { GoldCollectionSection } from './components/GoldCollectionSection';
-import { SkySampurnHomepageFeature } from './components/SkySampurnHomepageFeature';
 import { SkySampurnProject } from './components/SkySampurnProject';
 import { SkySamuraiProject } from './components/SkySamuraiProject';
 import { ReferenceHomepageTop, ReferenceHomepageBottom } from './components/ReferenceHomepageSections';
@@ -219,7 +218,6 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
       }} />
 
       <GoldCollectionSection />
-      <SkySampurnHomepageFeature />
 
       {/* Interactive map and listings section */}
       <div id="map-search-section" className="scroll-mt-20"><FilterBar /></div>
