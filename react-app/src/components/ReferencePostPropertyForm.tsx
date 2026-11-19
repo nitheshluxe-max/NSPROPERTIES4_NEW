@@ -90,7 +90,7 @@ export function ReferencePostPropertyForm({ onSubmitted }: { onSubmitted:()=>voi
       if(f.property_title.trim().length<5||f.property_title.trim().length>120) return 'Property title must contain 5–120 characters.';
       if(!Number.isFinite(Number(f.price))||Number(f.price)<=0) return 'Enter a valid asking price.';
       if(photos.length>6||photos.some(p=>!['image/jpeg','image/png','image/webp'].includes(p.type)||p.size>5*1024*1024)) return 'Upload at most 6 JPG, PNG or WebP images (up to 5 MB each).';
-      if(brochure && (brochure.type!=='application/pdf'||brochure.size>10*1024*1024)) return 'Brochure must be a PDF of up to 10 MB.';
+      if(brochure && (brochure.type!=='application/pdf'||brochure.size>60*1024*1024)) return 'Brochure must be a PDF of up to 60 MB.';
       if(floorPlan && (floorPlan.type!=='application/pdf'||floorPlan.size>10*1024*1024)) return 'Floor plan must be a PDF of up to 10 MB.';
     }
     return '';
@@ -291,7 +291,7 @@ export function ReferencePostPropertyForm({ onSubmitted }: { onSubmitted:()=>voi
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="rounded-xl border border-slate-200 p-4 flex flex-col gap-2 cursor-pointer"><FileText className="w-5 h-5 text-blue-600"/><strong>Upload Unit / Floor Plan (PDF)</strong><span className="text-xs text-slate-500">{floorPlan?.name||'Optional, max 10 MB'}</span>
               <input type="file" accept="application/pdf,.pdf" onChange={e=>setFloorPlan(e.target.files?.[0]||null)} className="text-xs max-w-full"/></label>
-            <label className="rounded-xl border border-slate-200 p-4 flex flex-col gap-2 cursor-pointer"><Upload className="w-5 h-5 text-blue-600"/><strong>Upload E-Brochure (PDF)</strong><span className="text-xs text-slate-500">{brochure?.name||'Optional, max 10 MB'}</span>
+            <label className="rounded-xl border border-slate-200 p-4 flex flex-col gap-2 cursor-pointer"><Upload className="w-5 h-5 text-blue-600"/><strong>Upload E-Brochure (PDF)</strong><span className="text-xs text-slate-500">{brochure?.name||'Optional, max 60 MB'}</span>
               <input type="file" accept="application/pdf,.pdf" onChange={e=>setBrochure(e.target.files?.[0]||null)} className="text-xs max-w-full"/></label>
           </div>
         </Group>
