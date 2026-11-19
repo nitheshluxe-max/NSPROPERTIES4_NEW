@@ -27,6 +27,7 @@ export function GoldCollectionSection(){
   return ()=>{active=false;};
  },[]);
  const hasSamurai=properties.some(p=>/sky\s*samurai/i.test(p.title));
+ const hasSampurn=properties.some(p=>/sky\s*sampurn/i.test(p.title));
  return <section id="gold-collection" aria-labelledby="gold-collection-title" className="w-full bg-gradient-to-b from-[#fff9e7] via-[#fffcf4] to-white border-y border-amber-200 py-10 sm:py-14">
   <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
    <div className="flex flex-wrap items-end justify-between gap-4 mb-7">
@@ -38,7 +39,21 @@ export function GoldCollectionSection(){
      <div className="h-44 sm:h-48 bg-gradient-to-br from-[#f8e7ad] via-[#d9b15a] to-[#9c6b24] relative flex items-center justify-center"><Crown className="w-16 h-16 text-white/70"/><span className="absolute top-3 left-3 rounded-full bg-[#241b0d] text-[#ffe49b] px-3 py-1 text-xs font-bold">✦ GOLD COLLECTION</span></div>
      <div className="p-5 flex-1 flex flex-col"><h3 className="font-serif text-xl font-black text-[#2c1e0b]">DS-MAX Sky Samurai</h3><p className="mt-2 flex gap-1 items-center text-sm text-[#62431c]"><MapPin className="w-4 h-4"/>Soukya Road, Whitefield</p><p className="mt-3 text-sm font-medium">2 & 3 BHK Apartments</p><p className="mt-3 text-2xl font-black text-[#291c09]">From ₹78.38 L*</p><p className="mt-2 text-xs text-[#6c4c1f]">Indicative price; verify availability and charges.</p><span className="mt-auto pt-5 flex items-center gap-2 text-sm font-bold text-[#33230b]">View Project Details <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/></span></div>
     </a>}
-    {properties.map(p=><a key={p.id} href={/sky\s*samurai/i.test(p.title)?'#project/ds-max-sky-samurai':'#free-marketplace'} className="group flex flex-col overflow-hidden rounded-2xl border-2 border-[#bd8a27] bg-gradient-to-br from-[#fff6d9] via-[#f7e5a9] to-[#eac66b] shadow-[0_8px_22px_rgba(156,107,18,.16)] hover:shadow-xl transition-shadow">
+    {!hasSampurn&&<a href="#project/ds-max-sky-sampurn" className="group flex flex-col overflow-hidden rounded-2xl border-2 border-[#bd8a27] bg-gradient-to-br from-[#fff6d9] via-[#f7e5a9] to-[#eac66b] shadow-[0_8px_22px_rgba(156,107,18,.16)] hover:shadow-xl transition-shadow">
+     <div className="relative h-44 sm:h-48 bg-gradient-to-br from-amber-200 to-amber-500 overflow-hidden">
+      <img src="https://ns-properties-seo-accelerator-1023770862236.asia-southeast1.run.app/assets/aistudio/ds_sky_sampurn-varthur_bangalore-bengaluru-ds-max_properties_private_limited_ce7873d3.jpeg" alt="DS-MAX Sky Sampurn residential project elevation" loading="lazy" className="h-full w-full object-cover"/>
+      <span className="absolute top-3 left-3 rounded-full bg-[#241b0d] text-[#ffe49b] px-3 py-1 text-xs font-bold">✦ GOLD COLLECTION</span>
+     </div>
+     <div className="p-5 flex-1 flex flex-col">
+      <h3 className="font-serif text-xl font-black text-[#2c1e0b]">DS-MAX Sky Sampurn</h3>
+      <p className="mt-2 flex gap-1 items-center text-sm text-[#62431c]"><MapPin className="w-4 h-4"/>Varthur, Bengaluru</p>
+      <p className="mt-3 text-sm font-medium">2 &amp; 3 BHK Apartments</p>
+      <p className="mt-3 text-2xl font-black text-[#291c09]">From ₹80 L*</p>
+      <p className="mt-2 text-xs text-[#6c4c1f]">Indicative price; verify availability and charges.</p>
+      <span className="mt-auto pt-5 flex items-center gap-2 text-sm font-bold text-[#33230b]">View Project Details <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/></span>
+     </div>
+    </a>}
+    {properties.map(p=><a key={p.id} href={/sky\s*samurai/i.test(p.title)?'#project/ds-max-sky-samurai':/sky\s*sampurn/i.test(p.title)?'#project/ds-max-sky-sampurn':'#free-marketplace'} className="group flex flex-col overflow-hidden rounded-2xl border-2 border-[#bd8a27] bg-gradient-to-br from-[#fff6d9] via-[#f7e5a9] to-[#eac66b] shadow-[0_8px_22px_rgba(156,107,18,.16)] hover:shadow-xl transition-shadow">
      <div className="relative h-44 sm:h-48 bg-gradient-to-br from-amber-200 to-amber-500 overflow-hidden">{p.photoUrl?<img src={p.photoUrl} alt={p.title} loading="lazy" className="h-full w-full object-cover"/>:<div className="h-full flex items-center justify-center"><Crown className="w-16 h-16 text-white/60"/></div>}<span className="absolute top-3 left-3 rounded-full bg-[#241b0d] text-[#ffe49b] px-3 py-1 text-xs font-bold">✦ GOLD COLLECTION</span></div>
      <div className="p-5 flex-1 flex flex-col"><h3 className="font-serif text-xl font-black text-[#2c1e0b] line-clamp-2">{p.title}</h3><p className="mt-2 flex items-center gap-1 text-sm text-[#62431c]"><MapPin className="w-4 h-4"/>{p.locality}, {p.city}</p><p className="mt-3 text-sm capitalize">{p.property_type}{p.area_sqft?' · '+p.area_sqft.toLocaleString('en-IN')+' sq. ft.':''}</p><p className="mt-3 text-2xl font-black text-[#291c09]">{price(p.price)}</p><span className="mt-auto pt-5 flex items-center gap-2 text-sm font-bold text-[#33230b]">Explore Property <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform"/></span></div>
     </a>)}
