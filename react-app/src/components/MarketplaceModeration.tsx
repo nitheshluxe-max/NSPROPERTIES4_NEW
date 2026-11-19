@@ -13,6 +13,7 @@ const money = (price: number) => new Intl.NumberFormat('en-IN', {
 }).format(price);
 
 export function MarketplaceModeration() {
+  const [highlights,setHighlights]=useState<Record<string,'gold'|'silver'>>({});
   const [properties, setProperties] = useState<ReviewItem[]>([]);
   const [editRequests,setEditRequests] = useState<Array<{id:string;property_title:string;changes:Record<string,unknown>;created_at:string}>>([]);
   const [mediaEdits,setMediaEdits]=useState<Array<{id:string;property_id:string;status:string;photo_paths:string[];brochure_path:string|null;floor_plan_path:string|null;replace_photos:boolean;replace_brochure:boolean;replace_floor_plan:boolean;created_at:string}>>([]);
@@ -33,6 +34,9 @@ export function MarketplaceModeration() {
     setError('');
     try {
       const data = await listAdminProperties();
+      const tiers=await supabase.rpc('admin_list_property_highlights');
+      if(tiers.error)throw tiers.error;
+      setHighlights(Object.fromEntries((tiers.data||[]).map((h:{property_id:string;tier:'gold'|'silver'})=>[h.property_id,h.tier])));
       const edits = await supabase.rpc('admin_list_property_edits');
       if (edits.error) throw edits.error;
       setEditRequests((edits.data || []) as typeof editRequests);
@@ -68,6 +72,15 @@ export function MarketplaceModeration() {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
+  async function setHighlight(id:string,tier:'gold'|'silver'|null) {
+    if(workingId)return;
+    setWorkingId(id);setError('');
+    const result=await supabase.rpc('admin_set_property_highlight',{target_id:id,new_tier:tier});
+    setWorkingId(null);
+    if(result.error){setError(result.error.message);return;}
+    setNotice(tier?'Collection updated.':'Collection highlight removed.');
+    await refresh();
+  }
   async function changeStatus(item: ReviewItem, status: ReviewStatus) {
     if (workingId) return;
     if (!window.confirm(`Mark "${item.title}" as ${status}?`)) return;
@@ -169,6 +182,7 @@ export function MarketplaceModeration() {
               {item.contact_phone && <div className="text-xs text-slate-600">Seller contact (admin only): {item.contact_phone}</div>}
             </div>
             <div className="flex flex-wrap gap-2 items-center">
+              {item.status==='approved'&&<label className="text-xs font-semibold text-slate-700">Collection<select aria-label={`Collection tier for ${item.title}`} className="ml-2 border rounded-lg px-2 py-2 bg-white" value={highlights[item.id]||''} disabled={!!workingId} onChange={e=>void setHighlight(item.id,(e.target.value||null) as 'gold'|'silver'|null)}><option value="">Standard</option><option value="silver">Silver Collection</option><option value="gold">Gold Collection</option></select></label>}
               {media[item.id]?.photos.map(url => <img key={url} src={url} alt={item.title + ' photo'} loading="lazy" className="h-16 w-20 object-cover rounded-lg" />)}
               {media[item.id]?.documents.map(doc => <button key={doc.path} type="button" className="px-3 py-2 rounded-lg border border-blue-300 text-blue-800 text-sm" onClick={() => void viewBrochure(doc.path)}>View {doc.type === 'floor-plan' ? 'floor plan' : 'brochure'} (PDF)</button>)}
               {media[item.id]?.brochurePath && <button type="button" className="px-3 py-2 rounded-lg border border-blue-300 text-blue-800 text-sm" onClick={() => void viewBrochure(media[item.id].brochurePath!)}>View brochure</button>}
