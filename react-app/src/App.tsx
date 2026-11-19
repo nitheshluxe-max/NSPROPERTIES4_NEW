@@ -9,6 +9,7 @@ import {
 } from './context/PropertyContext';
 import { Navbar } from './components/Navbar';
 import { FreeMarketplace } from './components/FreeMarketplace';
+import { SkySamuraiGoldFeature } from './components/SkySamuraiGoldFeature';
 import { SkySamuraiProject } from './components/SkySamuraiProject';
 import { ReferenceHomepageTop, ReferenceHomepageBottom } from './components/ReferenceHomepageSections';
 import { HeroSearch } from './components/HeroSearch';
@@ -214,6 +215,8 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
         setMapFocusTimestamp(Date.now());
         if (window.innerWidth < 1024) setMobileViewMode('map');
       }} />
+
+      <SkySamuraiGoldFeature />
 
       {/* Interactive map and listings section */}
       <div id="map-search-section" className="scroll-mt-20"><FilterBar /></div>
