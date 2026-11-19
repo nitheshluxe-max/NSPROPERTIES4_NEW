@@ -8,11 +8,14 @@ type Listing = {
   area_sqft: number | null; property_type: string; purpose: string;
   description: string | null; publish_contact: boolean; contact_phone: string | null;
   created_at: string;
+  possession?: string | null;
+  possession_date?: string | null;
   tier?: 'gold'|'silver'|null;
   photoUrls?: string[];
   brochurePath?: string;
   brochureName?: string;
 };
+const possessionLabel = (value?:string|null) => ({ready:'Ready to Move','under-construction':'Under Construction','new-launch':'New Launch'}[value || ''] || value || '');
 const money = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
 export function FreeMarketplace() {
@@ -89,7 +92,7 @@ export function FreeMarketplace() {
     setBusy(true);
     const load = async () => {
       let request = supabase.from('public_properties')
-        .select('id,title,city,locality,price,area_sqft,property_type,purpose,description,publish_contact,contact_phone,created_at')
+        .select('id,title,city,locality,price,area_sqft,property_type,purpose,description,publish_contact,contact_phone,created_at,possession,possession_date')
         .eq('status', 'approved').order('created_at', { ascending: false }).limit(100);
       if (purpose) request = request.eq('purpose', purpose);
       if (type) request = request.eq('property_type', type);
@@ -182,6 +185,7 @@ export function FreeMarketplace() {
           {p.tier==='gold' && /sky\s*samurai/i.test(p.title) && <a href="#project/ds-max-sky-samurai" className="mt-2 inline-block text-sm font-semibold text-[#a65a21] underline">Explore Gold Project Details →</a>}<p className="text-blue-700 text-xl font-black my-2">{money(p.price)}</p>
           <p className="text-sm text-slate-600">{p.locality}, {p.city}</p>
           <p className="text-sm text-slate-600 capitalize mt-1">{p.property_type} · {p.purpose} {p.area_sqft ? '· ' + p.area_sqft + ' sq ft' : ''}</p>
+          {p.possession && <p className="text-sm mt-2"><span className="font-semibold text-slate-800">Possession:</span> <span className="rounded-md bg-blue-50 text-blue-800 px-2 py-1 font-medium">{possessionLabel(p.possession)}</span>{p.possession_date && <span className="text-slate-600 ml-2">{p.possession_date}</span>}</p>}
           {p.description && <p className="text-sm mt-3 whitespace-pre-line">{p.description}</p>}
           {p.brochurePath && <button type="button" onClick={() => void openBrochure(p.brochurePath!)} className="inline-flex mt-4 mr-2 rounded-lg bg-slate-800 text-white font-bold px-4 py-2">View brochure (PDF)</button>}
           {p.publish_contact && p.contact_phone ? <a className="inline-flex mt-4 rounded-lg bg-blue-700 text-white font-bold px-4 py-2" href={'tel:' + p.contact_phone.replace(/[^+0-9]/g, '')}>Call seller — FREE</a> : <p className="text-sm text-slate-500 mt-4">Seller has not shared a public phone number.</p>}
