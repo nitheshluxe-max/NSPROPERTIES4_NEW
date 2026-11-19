@@ -9,7 +9,7 @@ import {
 } from './context/PropertyContext';
 import { Navbar } from './components/Navbar';
 import { FreeMarketplace } from './components/FreeMarketplace';
-import { SkySamuraiGoldFeature } from './components/SkySamuraiGoldFeature';
+import { GoldCollectionSection } from './components/GoldCollectionSection';
 import { SkySampurnHomepageFeature } from './components/SkySampurnHomepageFeature';
 import { SkySampurnProject } from './components/SkySampurnProject';
 import { SkySamuraiProject } from './components/SkySamuraiProject';
@@ -218,7 +218,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
         if (window.innerWidth < 1024) setMobileViewMode('map');
       }} />
 
-      <SkySamuraiGoldFeature />
+      <GoldCollectionSection />
       <SkySampurnHomepageFeature />
 
       {/* Interactive map and listings section */}
