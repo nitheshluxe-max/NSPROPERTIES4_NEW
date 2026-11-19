@@ -22,9 +22,10 @@ export function FreeMarketplace() {
   const [type, setType] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [currentRoute, setCurrentRoute] = useState(() => window.location.hash);
   const [postOpen, setPostOpen] = useState(() => ['#post-property', '#my-properties'].includes(window.location.hash));
   useEffect(() => {
-    const sync = () => setPostOpen(['#post-property', '#my-properties'].includes(window.location.hash));
+    const sync = () => { setCurrentRoute(window.location.hash); setPostOpen(['#post-property', '#my-properties'].includes(window.location.hash)); };
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
   }, []);
@@ -126,15 +127,17 @@ export function FreeMarketplace() {
   }, [purpose, type, refresh]);
   const visible = items.filter(p => [p.title, p.city, p.locality].some(s => s.toLowerCase().includes(query.toLowerCase().trim()))).sort((a,b)=>(a.tier === 'gold' ? 0 : a.tier === 'silver' ? 1 : 2) - (b.tier === 'gold' ? 0 : b.tier === 'silver' ? 1 : 2));
 
+  const isManageRoute = currentRoute === '#my-properties';
+  const isPostRoute = currentRoute === '#post-property';
   const inputClass = 'w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white text-slate-900';
   return <main className="min-h-screen bg-slate-50">
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-wrap justify-between gap-4 items-center mb-6">
         <a href="#home" className="text-blue-700 font-semibold">← Back to NS Properties 4</a>
-        <a href="#my-properties" className="rounded-lg bg-blue-700 text-white px-4 py-2 font-semibold">My Properties / Edit Listings</a>
+        <div className="flex flex-wrap gap-2"><a href="#post-property" className="rounded-lg bg-blue-700 text-white px-4 py-2 font-semibold">Post Property Free</a><a href="#my-properties" className="rounded-lg border border-blue-700 text-blue-700 px-4 py-2 font-semibold">My Properties / Edit Listings</a><a href="#free-marketplace" className="rounded-lg border border-slate-300 px-4 py-2 font-semibold">Browse Marketplace</a></div>
 
       </div>
-      <section className="rounded-2xl bg-slate-900 text-white p-7 md:p-12 mb-8">
+      {!isManageRoute && !isPostRoute && <section className="rounded-2xl bg-slate-900 text-white p-7 md:p-12 mb-8">
         <p className="text-emerald-300 text-sm font-bold mb-2">100% FREE PROPERTY MARKETPLACE</p>
         <h1 className="text-3xl md:text-5xl font-black">Find, list and connect. No paywalls.</h1>
         <p className="mt-3 text-slate-200 max-w-2xl">Browse homes and commercial properties, publish your listing for free, and contact sellers who choose to share their details.</p>
@@ -143,11 +146,11 @@ export function FreeMarketplace() {
           <select aria-label="Listing purpose" value={purpose} onChange={e => setPurpose(e.target.value)} className={inputClass}><option value="">Buy, rent or lease</option><option value="sale">Buy</option><option value="rent">Rent</option><option value="lease">Lease</option></select>
           <select aria-label="Property type" value={type} onChange={e => setType(e.target.value)} className={inputClass}><option value="">All types</option><option value="apartment">Apartment</option><option value="house">House</option><option value="plot">Plot</option><option value="commercial">Commercial</option><option value="pg">PG</option></select>
         </div>
-      </section>
-      {message && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-5 text-sm">{message}</p>}
-      {account && <div id="my-properties" className="mb-8"><MyProperties refreshKey={refresh}/></div>}
+      </section>}
+      {!isManageRoute && !isPostRoute && message && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-5 text-sm">{message}</p>}
+      {account && isManageRoute && <div id="my-properties" className="mb-8"><MyProperties refreshKey={refresh}/></div>}
       {postOpen && <section className="rounded-2xl bg-white border border-slate-200 p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-2">{window.location.hash === "#my-properties" ? "Sign in to manage your properties" : "List your property free"}</h2>
+        <h2 className="text-2xl font-bold mb-2">{isManageRoute ? "Manage your properties" : "List your property free"}</h2>
         <p className="text-sm text-slate-600 mb-4">Sign up or sign in before posting. Your listing will appear publicly only after admin approval.</p>
         {!account ? <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-5">
           <div className="flex gap-2 mb-4">
@@ -166,10 +169,10 @@ export function FreeMarketplace() {
           <span>Signed in as <strong>{account.email}</strong></span>
           <button type="button" onClick={() => void signOutMarketplace()} className="text-blue-700 underline">Sign out</button>
         </div>}
-        {account && window.location.hash !== "#my-properties" && <ReferencePostPropertyForm onSubmitted={() => setRefresh(v => v + 1)} />}
+        {account && <div id="upload-property"><h3 className="text-xl font-bold mt-5 mb-3">Upload a new property</h3><ReferencePostPropertyForm onSubmitted={() => setRefresh(v => v + 1)} /></div>}
       </section>}
-      {brochureError && <p role="alert" className="text-red-700 mb-4">{brochureError}</p>}
-      <h2 className="text-2xl font-bold mb-4">Available properties {busy ? '· Loading…' : '(' + visible.length + ')'}</h2>
+      {!isManageRoute && !isPostRoute && brochureError && <p role="alert" className="text-red-700 mb-4">{brochureError}</p>}
+      {!isManageRoute && !isPostRoute && <><h2 className="text-2xl font-bold mb-4">Available properties {busy ? '· Loading…' : '(' + visible.length + ')'}</h2>
       {!busy && visible.length === 0 && <p className="text-slate-600">No approved properties match your search.</p>}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {visible.map(p => <article key={p.id} className={`rounded-xl border-2 shadow-sm p-5 transition-shadow hover:shadow-lg ${p.tier==='gold'?'bg-gradient-to-br from-amber-50 via-white to-yellow-50 border-amber-400 shadow-amber-100':p.tier==='silver'?'bg-gradient-to-br from-slate-100 via-white to-gray-50 border-slate-400':'bg-white border-slate-200'}`}>
@@ -183,7 +186,7 @@ export function FreeMarketplace() {
           {p.brochurePath && <button type="button" onClick={() => void openBrochure(p.brochurePath!)} className="inline-flex mt-4 mr-2 rounded-lg bg-slate-800 text-white font-bold px-4 py-2">View brochure (PDF)</button>}
           {p.publish_contact && p.contact_phone ? <a className="inline-flex mt-4 rounded-lg bg-blue-700 text-white font-bold px-4 py-2" href={'tel:' + p.contact_phone.replace(/[^+0-9]/g, '')}>Call seller — FREE</a> : <p className="text-sm text-slate-500 mt-4">Seller has not shared a public phone number.</p>}
         </article>)}
-      </div>
+      </div></>}
     </div>
   </main>;
 }
