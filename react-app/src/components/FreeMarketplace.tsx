@@ -146,7 +146,7 @@ export function FreeMarketplace() {
           <select aria-label="Listing purpose" value={purpose} onChange={e => setPurpose(e.target.value)} className={inputClass}><option value="">Buy, rent or lease</option><option value="sale">Buy</option><option value="rent">Rent</option><option value="lease">Lease</option></select>
           <select aria-label="Property type" value={type} onChange={e => setType(e.target.value)} className={inputClass}><option value="">All types</option><option value="apartment">Apartment</option><option value="house">House</option><option value="plot">Plot</option><option value="commercial">Commercial</option><option value="pg">PG</option></select>
         </div>
-      </section>
+      </section>}
       {!isManageRoute && !isPostRoute && message && <p role="status" className="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-5 text-sm">{message}</p>}
       {account && isManageRoute && <div id="my-properties" className="mb-8"><MyProperties refreshKey={refresh}/></div>}
       {postOpen && <section className="rounded-2xl bg-white border border-slate-200 p-6 mb-8">
