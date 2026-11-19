@@ -124,7 +124,7 @@ export function FreeMarketplace() {
     void load();
     return () => { active = false; };
   }, [purpose, type, refresh]);
-  const visible = items.filter(p => [p.title, p.city, p.locality].some(s => s.toLowerCase().includes(query.toLowerCase().trim()))).sort((a,b)=>({gold:0,silver:1}[a.tier||'']??2)-({gold:0,silver:1}[b.tier||'']??2));
+  const visible = items.filter(p => [p.title, p.city, p.locality].some(s => s.toLowerCase().includes(query.toLowerCase().trim()))).sort((a,b)=>(a.tier === 'gold' ? 0 : a.tier === 'silver' ? 1 : 2) - (b.tier === 'gold' ? 0 : b.tier === 'silver' ? 1 : 2));
 
   const inputClass = 'w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white text-slate-900';
   return <main className="min-h-screen bg-slate-50">
