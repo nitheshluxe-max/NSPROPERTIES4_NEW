@@ -10,6 +10,8 @@ import {
 import { Navbar } from './components/Navbar';
 import { FreeMarketplace } from './components/FreeMarketplace';
 import { SkySamuraiGoldFeature } from './components/SkySamuraiGoldFeature';
+import { SkySampurnHomepageFeature } from './components/SkySampurnHomepageFeature';
+import { SkySampurnProject } from './components/SkySampurnProject';
 import { SkySamuraiProject } from './components/SkySamuraiProject';
 import { ReferenceHomepageTop, ReferenceHomepageBottom } from './components/ReferenceHomepageSections';
 import { HeroSearch } from './components/HeroSearch';
@@ -217,6 +219,7 @@ const PortalContent: React.FC<{ onOpenCompare: () => void }> = ({ onOpenCompare 
       }} />
 
       <SkySamuraiGoldFeature />
+      <SkySampurnHomepageFeature />
 
       {/* Interactive map and listings section */}
       <div id="map-search-section" className="scroll-mt-20"><FilterBar /></div>
@@ -558,6 +561,7 @@ const MainApp: React.FC = () => {
     return () => { window.removeEventListener('hashchange', sync); window.removeEventListener('popstate', sync); };
   }, []);
   if (window.location.hash === '#project/ds-max-sky-samurai') return <SkySamuraiProject />;
+  if (window.location.hash === '#project/ds-max-sky-sampurn') return <SkySampurnProject />;
   if (recoveryOpen) return <PasswordRecovery onClose={() => { window.history.replaceState({}, '', window.location.pathname + '#admin'); setRecoveryOpen(false); }} />;
   if (marketplaceOpen) return <FreeMarketplace />;
 
