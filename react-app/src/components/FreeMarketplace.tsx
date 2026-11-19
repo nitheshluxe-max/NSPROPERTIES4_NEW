@@ -175,7 +175,8 @@ export function FreeMarketplace() {
         {visible.map(p => <article key={p.id} className={`rounded-xl border-2 shadow-sm p-5 transition-shadow hover:shadow-lg ${p.tier==='gold'?'bg-gradient-to-br from-amber-50 via-white to-yellow-50 border-amber-400 shadow-amber-100':p.tier==='silver'?'bg-gradient-to-br from-slate-100 via-white to-gray-50 border-slate-400':'bg-white border-slate-200'}`}>
           {p.tier&&<div className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold tracking-wide ${p.tier==='gold'?'bg-amber-200 text-amber-950':'bg-slate-200 text-slate-800'}`} aria-label={`${p.tier} featured collection`}>{p.tier==='gold'?'✦ Gold Collection':'◆ Silver Collection'}</div>}
           {p.photoUrls?.length ? <div className="mb-4"><img src={p.photoUrls[0]} alt={p.title} loading="lazy" className="w-full h-48 object-cover rounded-lg"/>{p.photoUrls.length > 1 && <div className="flex gap-2 overflow-x-auto mt-2">{p.photoUrls.slice(1).map(url => <img key={url} src={url} alt={p.title + ' additional view'} loading="lazy" className="h-16 w-20 object-cover rounded-md" />)}</div>}</div> : null}
-          <h3 className="font-bold text-lg">{p.title}</h3><p className="text-blue-700 text-xl font-black my-2">{money(p.price)}</p>
+          <h3 className="font-bold text-lg">{p.title}</h3>
+          {p.tier==='gold' && /sky\s*samurai/i.test(p.title) && <a href="#project/ds-max-sky-samurai" className="mt-2 inline-block text-sm font-semibold text-[#a65a21] underline">Explore Gold Project Details →</a>}<p className="text-blue-700 text-xl font-black my-2">{money(p.price)}</p>
           <p className="text-sm text-slate-600">{p.locality}, {p.city}</p>
           <p className="text-sm text-slate-600 capitalize mt-1">{p.property_type} · {p.purpose} {p.area_sqft ? '· ' + p.area_sqft + ' sq ft' : ''}</p>
           {p.description && <p className="text-sm mt-3 whitespace-pre-line">{p.description}</p>}
