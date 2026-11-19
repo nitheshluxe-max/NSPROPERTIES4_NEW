@@ -15,6 +15,8 @@ type Listing = {
   photoUrls?: string[];
   brochurePath?: string;
   brochureName?: string;
+  floorPlanPath?: string;
+  floorPlanName?: string;
 };
 const possessionLabel = (value?:string|null) => ({ready:'Ready to Move','under-construction':'Under Construction','new-launch':'New Launch'}[value || ''] || value || '');
 const money = formatIndianPropertyPrice;
@@ -82,11 +84,23 @@ export function FreeMarketplace() {
   }
   const [refresh, setRefresh] = useState(0);
   const [brochureError, setBrochureError] = useState('');
-  async function openBrochure(path: string) {
+  async function openDocument(path: string, filename: string, download: boolean) {
     setBrochureError('');
-    const { data, error } = await supabase.storage.from('property-brochures').createSignedUrl(path, 60);
-    if (error || !data?.signedUrl) { setBrochureError('Unable to open brochure: ' + (error?.message || 'Not available')); return; }
-    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+    const bucket = supabase.storage.from('property-brochures');
+    const { data, error } = await bucket.createSignedUrl(path, 120, download ? { download: filename } : undefined);
+    if (error || !data?.signedUrl) {
+      setBrochureError('Unable to ' + (download ? 'download' : 'view') + ' PDF: ' + (error?.message || 'Document unavailable'));
+      return;
+    }
+    // Use a link after the asynchronous signing request to avoid popup blockers.
+    const link = document.createElement('a');
+    link.href = data.signedUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    if (download) link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
   useEffect(() => {
     let active = true;
@@ -105,23 +119,26 @@ export function FreeMarketplace() {
         const listings = (data || []) as Listing[];
         if (!listings.length) { setMessage(''); setItems([]); return; }
         const ids = listings.map(p => p.id);
-        const [photoResult, brochureResult, highlightsResult] = await Promise.all([
+        const [photoResult, brochureResult, documentsResult, highlightsResult] = await Promise.all([
           supabase.from('property_photos').select('property_id,storage_path,sort_order').in('property_id', ids).order('sort_order'),
           supabase.from('property_brochures').select('property_id,storage_path,file_name').in('property_id', ids),
+          supabase.from('property_documents').select('property_id,storage_path,file_name,document_type').in('property_id', ids),
           supabase.from('public_property_highlights').select('property_id,tier').in('property_id',ids)
         ]);
         if (!active) return;
-        if (photoResult.error || brochureResult.error || highlightsResult.error) {
-          console.warn('Marketplace media query failed:', photoResult.error?.message || brochureResult.error?.message || highlightsResult.error?.message);
+        if (photoResult.error || brochureResult.error || documentsResult.error || highlightsResult.error) {
+          console.warn('Marketplace media query failed:', photoResult.error?.message || brochureResult.error?.message || documentsResult.error?.message || highlightsResult.error?.message);
         }
         setMessage('');
         setItems(listings.map(p => {
-          const brochure = brochureResult.data?.find(b => b.property_id === p.id);
+          const brochure = documentsResult.data?.find(d => d.property_id === p.id && d.document_type === 'brochure') || brochureResult.data?.find(b => b.property_id === p.id);
+          const floorPlan = documentsResult.data?.find(d => d.property_id === p.id && d.document_type === 'floor-plan');
           return { ...p,
             tier: (highlightsResult.data?.find(h=>h.property_id===p.id)?.tier as Listing['tier'])||null,
             photoUrls: (photoResult.data || []).filter(photo => photo.property_id === p.id).map(photo =>
               supabase.storage.from('property-photos').getPublicUrl(photo.storage_path).data.publicUrl),
-            brochurePath: brochure?.storage_path, brochureName: brochure?.file_name
+            brochurePath: brochure?.storage_path, brochureName: brochure?.file_name,
+            floorPlanPath: floorPlan?.storage_path, floorPlanName: floorPlan?.file_name
           };
         }));
       }
@@ -188,7 +205,14 @@ export function FreeMarketplace() {
           <p className="text-sm text-slate-600 capitalize mt-1">{p.property_type} · {p.purpose} {p.area_sqft ? '· ' + p.area_sqft + ' sq ft' : ''}</p>
           {p.possession && <p className="text-sm mt-2"><span className="font-semibold text-slate-800">Possession:</span> <span className="rounded-md bg-blue-50 text-blue-800 px-2 py-1 font-medium">{possessionLabel(p.possession)}</span>{p.possession_date && <span className="text-slate-600 ml-2">{p.possession_date}</span>}</p>}
           {p.description && <p className="text-sm mt-3 whitespace-pre-line">{p.description}</p>}
-          {p.brochurePath && <button type="button" onClick={() => void openBrochure(p.brochurePath!)} className="inline-flex mt-4 mr-2 rounded-lg bg-slate-800 text-white font-bold px-4 py-2">View brochure (PDF)</button>}
+          {(p.brochurePath || p.floorPlanPath) && <section aria-label="Property documents" className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <h4 className="text-sm font-bold text-slate-900 mb-2">Brochure &amp; Floor Plan</h4>
+            {([['Project Brochure',p.brochurePath,p.brochureName],['Floor Plan',p.floorPlanPath,p.floorPlanName]] as const).map(([label,path,name]) => path ? <div key={label} className="mb-2 last:mb-0 flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-slate-700 mr-auto">{label} (PDF)</span>
+              <button type="button" onClick={() => void openDocument(path,name || label+'.pdf',false)} className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-white">View PDF</button>
+              <button type="button" onClick={() => void openDocument(path,name || label+'.pdf',true)} className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-bold text-white">Download PDF</button>
+            </div> : null)}
+          </section>}
           {p.publish_contact && p.contact_phone ? <a className="inline-flex mt-4 rounded-lg bg-blue-700 text-white font-bold px-4 py-2" href={'tel:' + p.contact_phone.replace(/[^+0-9]/g, '')}>Call seller — FREE</a> : <p className="text-sm text-slate-500 mt-4">Seller has not shared a public phone number.</p>}
         </article>)}
       </div></>}
