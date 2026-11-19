@@ -9,6 +9,7 @@ import {
 } from './context/PropertyContext';
 import { Navbar } from './components/Navbar';
 import { FreeMarketplace } from './components/FreeMarketplace';
+import { SkySamuraiProject } from './components/SkySamuraiProject';
 import { ReferenceHomepageTop, ReferenceHomepageBottom } from './components/ReferenceHomepageSections';
 import { HeroSearch } from './components/HeroSearch';
 import { FilterBar } from './components/FilterBar';
@@ -553,6 +554,7 @@ const MainApp: React.FC = () => {
     window.addEventListener('popstate', sync);
     return () => { window.removeEventListener('hashchange', sync); window.removeEventListener('popstate', sync); };
   }, []);
+  if (window.location.hash === '#project/ds-max-sky-samurai') return <SkySamuraiProject />;
   if (recoveryOpen) return <PasswordRecovery onClose={() => { window.history.replaceState({}, '', window.location.pathname + '#admin'); setRecoveryOpen(false); }} />;
   if (marketplaceOpen) return <FreeMarketplace />;
 
