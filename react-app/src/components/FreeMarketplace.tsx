@@ -1,3 +1,4 @@
+import { formatIndianPropertyPrice } from '../utils/formatIndianPropertyPrice';
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { ReferencePostPropertyForm } from './ReferencePostPropertyForm';
@@ -16,7 +17,7 @@ type Listing = {
   brochureName?: string;
 };
 const possessionLabel = (value?:string|null) => ({ready:'Ready to Move','under-construction':'Under Construction','new-launch':'New Launch'}[value || ''] || value || '');
-const money = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+const money = formatIndianPropertyPrice;
 
 export function FreeMarketplace() {
   const [items, setItems] = useState<Listing[]>([]);

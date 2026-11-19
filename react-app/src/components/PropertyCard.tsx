@@ -1,3 +1,4 @@
+import { formatIndianPropertyPrice } from '../utils/formatIndianPropertyPrice';
 import React, { useState } from 'react';
 import { Property } from '../types/property';
 import { useProperty } from '../context/PropertyContext';
@@ -217,7 +218,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             <div>
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-xl sm:text-2xl font-black text-slate-950 font-mono tabular-nums">
-                  {property.priceDisplay || 'Contact for Price'}
+                  {property.price > 0 ? formatIndianPropertyPrice(property.price) : (property.priceDisplay || 'Contact for Price')}
                 </span>
                 {typeof property.pricePerSqFt === 'number' && !isNaN(property.pricePerSqFt) && (
                   <span className="text-xs text-slate-500 font-mono tabular-nums">
