@@ -1,3 +1,4 @@
+import { formatIndianPropertyPrice } from '../utils/formatIndianPropertyPrice';
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { Property, PropertyInquiry, UserProfile, PropertyFilters, ListingStatus, VisitorStats, RegisteredLead, LeadRegistrationData } from '../types/property';
@@ -73,7 +74,7 @@ export function normalizeProperty(p: any): Property {
 
   const price = typeof p.price === 'number' && !isNaN(p.price) ? p.price : 0;
   const priceDisplay = String(
-    p.priceDisplay || (price > 0 ? `₹ ${price.toLocaleString('en-IN')}` : 'Contact for Price')
+    price > 0 ? formatIndianPropertyPrice(price) : (p.priceDisplay || 'Contact for Price')
   );
 
   const superBuiltUpArea =
